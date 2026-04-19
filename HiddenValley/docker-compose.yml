@@ -1,0 +1,21 @@
+services:
+  api:
+    build:
+      context: ./HiddenValley.API
+      dockerfile: Dockerfile
+    ports:
+      - "7084:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DB_CONNECTION=Server=host.docker.internal;Database=HiddenValleyDB;User Id=tu_usuario;Password=tu_password;TrustServerCertificate=True
+
+  frontend:
+    build:
+      context: ./HiddenValley.Frontend
+      dockerfile: Dockerfile
+    ports:
+      - "7075:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - api
