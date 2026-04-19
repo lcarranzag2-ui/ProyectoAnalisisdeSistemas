@@ -1,0 +1,16 @@
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\bin\Debug\net8.0\Scripts\SchemaInicial.sql
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\bin\Debug\net8.0\HiddenValley.Data.deps.json
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\bin\Debug\net8.0\HiddenValley.Data.dll
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\bin\Debug\net8.0\HiddenValley.Data.pdb
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\bin\Debug\net8.0\HiddenValley.Domain.dll
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\bin\Debug\net8.0\HiddenValley.Domain.pdb
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\obj\Debug\net8.0\HiddenValley.Data.csproj.AssemblyReference.cache
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\obj\Debug\net8.0\HiddenValley.Data.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\obj\Debug\net8.0\HiddenValley.Data.AssemblyInfoInputs.cache
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\obj\Debug\net8.0\HiddenValley.Data.AssemblyInfo.cs
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\obj\Debug\net8.0\HiddenValley.Data.csproj.CoreCompileInputs.cache
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\obj\Debug\net8.0\HiddenVa.73AACD6F.Up2Date
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\obj\Debug\net8.0\HiddenValley.Data.dll
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\obj\Debug\net8.0\refint\HiddenValley.Data.dll
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\obj\Debug\net8.0\HiddenValley.Data.pdb
+C:\Users\ASUS\Downloads\HiddenValley\HiddenValley\HiddenValley.Data\obj\Debug\net8.0\ref\HiddenValley.Data.dll

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>HiddenValley.App</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HiddenValley.Data\HiddenValley.Data.csproj" />
+    <ProjectReference Include="..\HiddenValley.Domain\HiddenValley.Domain.csproj" />
+    <ProjectReference Include="..\HiddenValley.Services\HiddenValley.Services.csproj" />
+  </ItemGroup>
+
+</Project>

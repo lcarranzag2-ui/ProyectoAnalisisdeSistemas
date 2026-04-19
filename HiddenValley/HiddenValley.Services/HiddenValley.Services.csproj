@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>HiddenValley.Services</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HiddenValley.Data\HiddenValley.Data.csproj" />
+    <ProjectReference Include="..\HiddenValley.Domain\HiddenValley.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
