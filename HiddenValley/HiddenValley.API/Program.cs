@@ -3,9 +3,11 @@ using HiddenValley.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Configurar SQL Server
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+//Configurar de PostgresSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddControllers();
 
