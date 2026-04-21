@@ -1,0 +1,100 @@
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE Persona(
+  IdPersona INTEGER PRIMARY KEY,
+  Nombres TEXT NOT NULL,
+  Apellidos TEXT NOT NULL,
+  FechaNacimiento DATE,
+  FechaRegistro DATE DEFAULT CURRENT_DATE,
+  DPI TEXT UNIQUE,
+  Telefono TEXT NOT NULL,
+  Gmail TEXT UNIQUE,
+  Direccion TEXT NOT NULL
+);
+
+CREATE TABLE PuestoTrabajo(
+  IdPuestoTrabajo INTEGER PRIMARY KEY,
+  Nombre TEXT NOT NULL,
+  Descripcion TEXT
+);
+
+CREATE TABLE EstadoCabana(
+  IdEstadoCabana INTEGER PRIMARY KEY,
+  Nombre TEXT NOT NULL UNIQUE,
+  Descripcion TEXT
+);
+
+CREATE TABLE Empleado(
+  IdEmpleado INTEGER PRIMARY KEY,
+  IdPersona INTEGER UNIQUE NOT NULL,
+  IdPuestoTrabajo INTEGER NOT NULL,
+  FOREIGN KEY(IdPersona) REFERENCES Persona(IdPersona) ON DELETE RESTRICT,
+  FOREIGN KEY(IdPuestoTrabajo) REFERENCES PuestoTrabajo(IdPuestoTrabajo) ON DELETE RESTRICT
+);
+
+CREATE TABLE Cliente(
+  IdCliente INTEGER PRIMARY KEY,
+  IdPersona INTEGER UNIQUE NOT NULL,
+  FOREIGN KEY(IdPersona) REFERENCES Persona(IdPersona) ON DELETE RESTRICT
+);
+
+CREATE TABLE TipoCabana(
+  IdTipoCabana INTEGER PRIMARY KEY,
+  Nombre TEXT NOT NULL,
+  Descripcion TEXT,
+  Capacidad INTEGER NOT NULL,
+  Precio REAL NOT NULL CHECK(Precio >= 0)
+);
+
+CREATE TABLE Cabana(
+  IdCabana INTEGER PRIMARY KEY,
+  IdTipoCabana INTEGER NOT NULL,
+  IdEstadoCabana INTEGER NOT NULL,
+  FOREIGN KEY(IdTipoCabana) REFERENCES TipoCabana(IdTipoCabana) ON DELETE RESTRICT,
+  FOREIGN KEY(IdEstadoCabana) REFERENCES EstadoCabana(IdEstadoCabana) ON DELETE RESTRICT
+);
+
+CREATE TABLE Servicio (
+  IdServicio INTEGER PRIMARY KEY,
+  Nombre TEXT NOT NULL UNIQUE,
+  Descripcion TEXT,
+  Precio REAL NOT NULL CHECK(Precio >= 0)
+);
+
+CREATE TABLE RegistroReservacion(
+  Id INTEGER PRIMARY KEY,
+  FechaEntrada DATE NOT NULL,
+  FechaSalida DATE NOT NULL,
+  CantidadPersonas INTEGER NOT NULL CHECK(CantidadPersonas > 0),
+  EstadoReserva TEXT NOT NULL CHECK(EstadoReserva IN ('Recibida','Confirmada','Cancelada','Pagada')),
+  TotalPagar REAL NOT NULL CHECK(TotalPagar >= 0),
+  IdCliente INTEGER NOT NULL,
+  IdCabana INTEGER NOT NULL,
+  IdEmpleado INTEGER NOT NULL,
+  FOREIGN KEY(IdCliente) REFERENCES Cliente(IdCliente) ON DELETE RESTRICT,
+  FOREIGN KEY(IdCabana) REFERENCES Cabana(IdCabana) ON DELETE RESTRICT,
+  FOREIGN KEY(IdEmpleado) REFERENCES Empleado(IdEmpleado) ON DELETE RESTRICT,
+  CHECK(FechaSalida > FechaEntrada)
+);
+
+CREATE TABLE ReservacionServicio(
+  IdReservacion INTEGER NOT NULL,
+  IdServicio INTEGER NOT NULL,
+  Cantidad INTEGER NOT NULL CHECK(Cantidad > 0),
+  PRIMARY KEY (IdReservacion, IdServicio),
+  FOREIGN KEY(IdReservacion) REFERENCES RegistroReservacion(Id) ON DELETE RESTRICT,
+  FOREIGN KEY(IdServicio) REFERENCES Servicio(IdServicio) ON DELETE RESTRICT
+);
+
+CREATE TABLE BitacoraEstados(
+  IdBitacoraEstado INTEGER PRIMARY KEY,
+  IdEstadoAnterior INTEGER NOT NULL,
+  IdEstadoNuevo INTEGER NOT NULL,
+  FechaCambio DATETIME DEFAULT CURRENT_TIMESTAMP,
+  IdCabana INTEGER NOT NULL,
+  IdEmpleado INTEGER NOT NULL,
+  FOREIGN KEY(IdEstadoAnterior) REFERENCES EstadoCabana(IdEstadoCabana) ON DELETE RESTRICT,
+  FOREIGN KEY(IdEstadoNuevo) REFERENCES EstadoCabana(IdEstadoCabana) ON DELETE RESTRICT,
+  FOREIGN KEY(IdCabana) REFERENCES Cabana(IdCabana) ON DELETE RESTRICT,
+  FOREIGN KEY(IdEmpleado) REFERENCES Empleado(IdEmpleado) ON DELETE RESTRICT
+);
