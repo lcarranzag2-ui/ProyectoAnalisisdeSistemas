@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HiddenValley.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a643f356db124b555cb5cfccbeac33a93bbff572")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7c0cd776693bf62b520319899c1cb9ac7cf6624b")]
 [assembly: System.Reflection.AssemblyProductAttribute("HiddenValley.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HiddenValley.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
