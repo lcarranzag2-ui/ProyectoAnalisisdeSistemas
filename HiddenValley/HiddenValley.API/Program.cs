@@ -1,11 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using HiddenValley.API.Data; 
 
+// Habilitar comportamiento legacy de timestamps en Npgsql 9 para que los DateTime
+// (sin Kind explícito) sean compatibles con columnas TIMESTAMP / DATE de Postgres.
+// Esto evita errores como "Cannot write DateTime with Kind=Unspecified".
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
-//Configurar SQL Server
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+//Configurar de PostgresSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddControllers();
 
