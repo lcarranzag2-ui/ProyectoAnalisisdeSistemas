@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using HiddenValley.API.Data; 
+using HiddenValley.API.Interfaces; 
+using HiddenValley.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +10,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 //Configurar de PostgresSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services.AddScoped<IServicioService, ServicioService>();
 
 builder.Services.AddControllers();
 

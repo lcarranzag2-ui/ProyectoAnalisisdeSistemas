@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 using HiddenValley.API.Models;
+using System.Security.Cryptography.X509Certificates;
 namespace HiddenValley.API.Data
 {
     public class ApplicationDbContext : DbContext
@@ -16,12 +17,13 @@ namespace HiddenValley.API.Data
 
         //definicion de las tablas en base a los modelos
         //ejemplo public DbSet<Persona> Personas { get; set; } 
+         public DbSet<Servicio> Servicio => Set<Servicio>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            //aqui pueden mapear las tablas y configurar llaves compuestas, nombres de tablas y relaciones
+           modelBuilder.Entity<Servicio>().ToTable("servicio");
         }
     }
 }
