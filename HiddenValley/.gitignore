@@ -1,13 +1,15 @@
+
 bin/
 obj/
 
 .vs/
-.vscode/
-
 *.user
 *.suo
+
 *.cache
 
-node_modules/
+.idea/
+.vscode/
 
-.env
+.DS_Store
+Thumbs.db
