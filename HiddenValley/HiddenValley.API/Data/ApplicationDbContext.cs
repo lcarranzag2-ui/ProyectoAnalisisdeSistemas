@@ -25,6 +25,9 @@ namespace HiddenValley.API.Data
         // Módulo Reservaciones (PROYECT-60)
         public DbSet<RegistroReservacion> RegistroReservacion { get; set; }
 
+        // Módulo Servicios (PROYECT-75)
+        public DbSet<Servicio> Servicio => Set<Servicio>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -135,6 +138,9 @@ namespace HiddenValley.API.Data
                 .HasOne(r => r.Cabana)
                 .WithMany(c => c.Reservaciones)
                 .HasForeignKey(r => r.IdCabana);
+
+            // ===== Módulo Servicios (PROYECT-75) =====
+            modelBuilder.Entity<Servicio>().ToTable("servicio");
         }
     }
 }
