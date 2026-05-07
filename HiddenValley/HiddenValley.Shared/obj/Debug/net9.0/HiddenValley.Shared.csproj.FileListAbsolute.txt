@@ -1,0 +1,12 @@
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\bin\Debug\net9.0\HiddenValley.Shared.deps.json
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\bin\Debug\net9.0\HiddenValley.Shared.dll
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\bin\Debug\net9.0\HiddenValley.Shared.pdb
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\obj\Debug\net9.0\HiddenValley.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\obj\Debug\net9.0\HiddenValley.Shared.AssemblyInfoInputs.cache
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\obj\Debug\net9.0\HiddenValley.Shared.AssemblyInfo.cs
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\obj\Debug\net9.0\HiddenValley.Shared.csproj.CoreCompileInputs.cache
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\obj\Debug\net9.0\HiddenValley.Shared.sourcelink.json
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\obj\Debug\net9.0\HiddenValley.Shared.dll
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\obj\Debug\net9.0\refint\HiddenValley.Shared.dll
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\obj\Debug\net9.0\HiddenValley.Shared.pdb
+C:\Users\Christian Chamo\Desktop\HiddenValley\HiddenValley\HiddenValley.Shared\obj\Debug\net9.0\ref\HiddenValley.Shared.dll

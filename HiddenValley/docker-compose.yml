@@ -5,9 +5,11 @@ services:
       dockerfile: Dockerfile
     ports:
       - "7084:8080"
+    volumes:
+      - ./data:/app/data
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - DB_CONNECTION=Server=host.docker.internal;Database=HiddenValleyDB;User Id=tu_usuario;Password=tu_password;TrustServerCertificate=True
+      # - DB_CONNECTION=Server=host.docker.internal;Database=HiddenValleyDB;User Id=tu_usuario;Password=tu_password;TrustServerCertificate=True
 
   frontend:
     build:
