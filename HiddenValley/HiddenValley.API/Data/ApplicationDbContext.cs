@@ -28,6 +28,10 @@ namespace HiddenValley.API.Data
         // Módulo Servicios (PROYECT-75)
         public DbSet<Servicio> Servicio => Set<Servicio>();
 
+        // Módulo Empleados (PROYECT-66)
+        public DbSet<PuestoTrabajo> PuestosTrabajo { get; set; }
+        public DbSet<Empleado> Empleados { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -141,6 +145,23 @@ namespace HiddenValley.API.Data
 
             // ===== Módulo Servicios (PROYECT-75) =====
             modelBuilder.Entity<Servicio>().ToTable("servicio");
+
+            // ===== Módulo Empleados (PROYECT-66) =====
+            modelBuilder.Entity<Empleado>()
+                .HasOne(e => e.Persona)
+                .WithMany()
+                .HasForeignKey(e => e.IdPersona)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Empleado>()
+                .HasOne(e => e.PuestoTrabajo)
+                .WithMany()
+                .HasForeignKey(e => e.IdPuestoTrabajo)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Empleado>()
+                .HasIndex(e => e.IdPersona)
+                .IsUnique();
         }
     }
 }

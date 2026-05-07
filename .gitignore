@@ -1,4 +1,49 @@
 <<<<<<< HEAD
+## .NET / C# ##
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+## Build results ##
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+## NuGet ##
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+packages/
+
+## ASP.NET ##
+wwwroot/lib/
+
+## Environment files ##
+.env
+*.env
+
+## OS ##
+.DS_Store
+Thumbs.db
+HiddenValley/HiddenValley.Frontend/obj
+HiddenValley/HiddenValley.Shared/obj/Debug
+HiddenValley/HiddenValley.Shared/obj/Debug
+HiddenValley/HiddenValley.Shared/obj
+HiddenValley/HiddenValley.Frontend/obj/Debug
+HiddenValley/HiddenValley.Frontend/obj/Debug
+=======
+<<<<<<< HEAD
 **/obj/
 **/bin/
 .vs/
@@ -33,4 +78,5 @@ project.nuget.cache
 # OS
 .DS_Store
 Thumbs.db
+>>>>>>> origin/main
 >>>>>>> origin/main
