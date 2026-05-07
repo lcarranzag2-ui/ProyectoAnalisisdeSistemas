@@ -3,25 +3,21 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HiddenValley.API.Models
 {
-    [Table("tipocabana")]
-    public class TipoCabana
+    [Table("estadocabana")]
+    public class EstadoCabana
     {
         [Key]
-        [Column("idtipocabana")]
-        public int IdTipoCabana { get; set; }
-
+        [Column("idestadocabana")]
+        public int IdEstadoCabana { get; set; }
+        
         [Column("nombre")]
         public string Nombre { get; set; } = string.Empty;
-
+        
         [Column("descripcion")]
         public string? Descripcion { get; set; }
-
-        [Column("capacidad")]
-        public int Capacidad { get; set; }
-
-        [Column("precio")]
-        public decimal Precio { get; set; }
-
+        
         public virtual ICollection<Cabana>? Cabanas { get; set; }
+        public virtual ICollection<BitacoraEstados>? BitacoraEstadosAnterior { get; set; }
+        public virtual ICollection<BitacoraEstados>? BitacoraEstadosNuevo { get; set; }
     }
 }
