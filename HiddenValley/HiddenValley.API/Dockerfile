@@ -6,10 +6,16 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY ["HiddenValley.API.csproj", "./"]
-RUN dotnet restore "./HiddenValley.API.csproj"
+# Copiar los csproj primero (mejora cache de Docker)
+COPY ["HiddenValley.API/HiddenValley.API.csproj", "HiddenValley.API/"]
+COPY ["HiddenValley.Shared/HiddenValley.Shared.csproj", "HiddenValley.Shared/"]
+RUN dotnet restore "HiddenValley.API/HiddenValley.API.csproj"
 
-COPY . .
+# Copiar el resto del código
+COPY HiddenValley.API/ HiddenValley.API/
+COPY HiddenValley.Shared/ HiddenValley.Shared/
+
+WORKDIR /src/HiddenValley.API
 RUN dotnet build "HiddenValley.API.csproj" -c Release -o /app/build
 
 FROM build AS publish
