@@ -11,12 +11,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./data/Tablas.sql:/docker-entrypoint-initdb.d/01-tablas.sql:ro
 
   api:
     build:
-      context: ./
-      dockerfile: HiddenValley.API/Dockerfile
+      context: ./HiddenValley.API
+      dockerfile: Dockerfile
     ports:
       - "7084:8080"
     environment:
