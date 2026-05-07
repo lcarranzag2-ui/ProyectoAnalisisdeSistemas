@@ -1,21 +1,14 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
 using HiddenValley.API.Models;
+
 namespace HiddenValley.API.Data
 {
     public class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options) 
-        { 
-
+            : base(options)
+        {
         }
-
-        //definicion de las tablas en base a los modelos
-        //ejemplo public DbSet<Persona> Personas { get; set; } 
 
         // Módulo Cabañas (PROYECT-61)
         public DbSet<Cabana> Cabanas { get; set; }
@@ -36,7 +29,6 @@ namespace HiddenValley.API.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            //aqui pueden mapear las tablas y configurar llaves compuestas, nombres de tablas y relaciones
             modelBuilder.Entity<Cabana>().ToTable("cabana");
             modelBuilder.Entity<TipoCabana>().ToTable("tipocabana");
             modelBuilder.Entity<EstadoCabana>().ToTable("estadocabana");
@@ -144,6 +136,5 @@ namespace HiddenValley.API.Data
                 .WithMany(c => c.Reservaciones)
                 .HasForeignKey(r => r.IdCabana);
         }
-        
     }
 }
