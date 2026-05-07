@@ -9,16 +9,16 @@ namespace HiddenValley.API.Models
         [Key]
         [Column("idcabana")]
         public int IdCabana { get; set; }
-        
+
         [Column("idtipocabana")]
         public int IdTipoCabana { get; set; }
-        
+
         [Column("idestadocabana")]
         public int IdEstadoCabana { get; set; }
-        
+
         [ForeignKey("IdTipoCabana")]
         public virtual TipoCabana? TipoCabana { get; set; }
-        
+
         [ForeignKey("IdEstadoCabana")]
         public virtual EstadoCabana? EstadoCabana { get; set; }
 
