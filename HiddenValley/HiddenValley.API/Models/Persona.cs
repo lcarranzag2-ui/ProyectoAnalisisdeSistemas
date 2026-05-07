@@ -1,33 +1,47 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace HiddenValley.API.Models;
-
-[Table("Persona")]
-public class Persona
+namespace HiddenValley.API.Models
 {
-    [Key]
-    public int IdPersona { get; set; }
+    [Table("persona")]
+    public class Persona
+    {
+        [Key]
+        [Column("idpersona")]
+        public int IdPersona { get; set; }
 
-    [Required, MaxLength(100)]
-    public string Nombres { get; set; } = null!;
+        [Required]
+        [MaxLength(100)]
+        [Column("nombres")]
+        public string Nombres { get; set; } = string.Empty;
 
-    [Required, MaxLength(100)]
-    public string Apellidos { get; set; } = null!;
+        [Required]
+        [MaxLength(100)]
+        [Column("apellidos")]
+        public string Apellidos { get; set; } = string.Empty;
 
-    public DateTime? FechaNacimiento { get; set; }
+        [Column("fechanacimiento")]
+        public DateOnly? FechaNacimiento { get; set; }
 
-    public DateTime FechaRegistro { get; set; } = DateTime.Now;
+        [Column("fecharegistro")]
+        public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
-    [MaxLength(20)]
-    public string? DPI { get; set; }
+        [MaxLength(20)]
+        [Column("dpi")]
+        public string? DPI { get; set; }
 
-    [Required, MaxLength(15)]
-    public string Telefono { get; set; } = null!;
+        [Required]
+        [MaxLength(15)]
+        [Column("telefono")]
+        public string Telefono { get; set; } = string.Empty;
 
-    [MaxLength(100)]
-    public string? Gmail { get; set; }
+        [MaxLength(100)]
+        [Column("gmail")]
+        public string? Gmail { get; set; }
 
-    [Required]
-    public string Direccion { get; set; } = null!;
+        [Required]
+        [Column("direccion")]
+        public string Direccion { get; set; } = string.Empty;
+    }
 }
