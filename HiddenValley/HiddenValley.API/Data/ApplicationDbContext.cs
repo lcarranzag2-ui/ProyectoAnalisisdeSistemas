@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
+using HiddenValley.API.Models;
 
 namespace HiddenValley.API.Data
 {
@@ -11,7 +8,19 @@ namespace HiddenValley.API.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
-            
+        }
+
+        public DbSet<Persona> Personas { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Persona>(entity =>
+            {
+                entity.HasIndex(p => p.DPI).IsUnique();
+                entity.HasIndex(p => p.Gmail).IsUnique();
+            });
         }
     }
 }
