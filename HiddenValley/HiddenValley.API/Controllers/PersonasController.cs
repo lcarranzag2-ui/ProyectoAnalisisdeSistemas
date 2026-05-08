@@ -1,97 +1,39 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using HiddenValley.API.Data;
-using HiddenValley.API.Models;
-using HiddenValley.API.Models.Dtos;
+using HiddenValley.API.Interfaces;
+using HiddenValley.Shared.DTOs;
 
-namespace HiddenValley.API.Controllers
+namespace HiddenValley.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class PersonasController(IPersonaService personaService) : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class PersonasController : ControllerBase
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        => Ok(await personaService.GetPagedAsync(search, page, pageSize));
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] PersonaCreateDto dto)
     {
-        private readonly ApplicationDbContext _context;
-
-        public PersonasController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
-        // POST: api/personas
-        [HttpPost]
-        public async Task<ActionResult<Persona>> CrearPersona([FromBody] PersonaCreateDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            if (!string.IsNullOrWhiteSpace(dto.DPI) &&
-                await _context.Personas.AnyAsync(p => p.DPI == dto.DPI))
-            {
-                return Conflict(new { mensaje = "Ya existe una persona con ese DPI." });
-            }
-
-            if (!string.IsNullOrWhiteSpace(dto.Gmail) &&
-                await _context.Personas.AnyAsync(p => p.Gmail == dto.Gmail))
-            {
-                return Conflict(new { mensaje = "Ya existe una persona con ese Gmail." });
-            }
-
-            var persona = new Persona
-            {
-                Nombres = dto.Nombres,
-                Apellidos = dto.Apellidos,
-                FechaNacimiento = dto.FechaNacimiento,
-                DPI = dto.DPI,
-                Telefono = dto.Telefono,
-                Gmail = dto.Gmail,
-                Direccion = dto.Direccion
-            };
-
-            _context.Personas.Add(persona);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(VerificarDpi), new { dpi = persona.DPI }, persona);
-        }
-
-        // GET: api/personas/dpi/{dpi}/existe
-        [HttpGet("dpi/{dpi}/existe")]
-        public async Task<ActionResult<object>> VerificarDpi(string dpi)
-        {
-            if (string.IsNullOrWhiteSpace(dpi))
-                return BadRequest(new { mensaje = "El DPI es obligatorio." });
-
-            var existe = await _context.Personas.AnyAsync(p => p.DPI == dpi);
-            return Ok(new { dpi, existe });
-        }
-
-        // PATCH: api/personas/{id}/contacto
-        [HttpPatch("{id}/contacto")]
-        public async Task<ActionResult<Persona>> ActualizarContacto(int id, [FromBody] PersonaContactoPatchDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var persona = await _context.Personas.FindAsync(id);
-            if (persona == null)
-                return NotFound(new { mensaje = $"No existe persona con Id {id}." });
-
-            if (dto.Gmail != null && dto.Gmail != persona.Gmail &&
-                await _context.Personas.AnyAsync(p => p.Gmail == dto.Gmail))
-            {
-                return Conflict(new { mensaje = "Ya existe una persona con ese Gmail." });
-            }
-
-            if (dto.Telefono != null)
-                persona.Telefono = dto.Telefono;
-
-            if (dto.Gmail != null)
-                persona.Gmail = dto.Gmail;
-
-            if (dto.Direccion != null)
-                persona.Direccion = dto.Direccion;
-
-            await _context.SaveChangesAsync();
-            return Ok(persona);
-        }
+        var res = await personaService.CreateAsync(dto);
+        return res.Success ? Ok(res) : BadRequest(new { mensaje = res.Message });
     }
+
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> Patch(int id, [FromBody] PersonaPatchDto dto)
+    {
+        var res = await personaService.PatchAsync(id, dto);
+        return res.Success ? Ok(new { mensaje = res.Message }) : BadRequest(new { mensaje = res.Message });
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var res = await personaService.DeleteAsync(id);
+        return res.Success ? Ok(new { mensaje = res.Message }) : BadRequest(new { mensaje = res.Message });
+    }
+
+    [HttpGet("dpi/{dpi}/existe")]
+    public async Task<IActionResult> VerificarDpi(string dpi) 
+        => Ok(new { dpi, existe = await personaService.ExisteDpiAsync(dpi) });
 }

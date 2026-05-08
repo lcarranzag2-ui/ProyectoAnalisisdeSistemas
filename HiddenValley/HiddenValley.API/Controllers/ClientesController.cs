@@ -1,61 +1,50 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using HiddenValley.API.Data;
-using HiddenValley.API.Models;
+using HiddenValley.API.Interfaces;
 using HiddenValley.Shared.DTOs;
-
 
 namespace HiddenValley.API.Controllers;
 
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ClientesController(ApplicationDbContext context) : ControllerBase
+[ApiController]
+[Route("api/[controller]")]
+public class ClientesController(IClienteService clienteService) : ControllerBase
+{
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        [HttpPost]
-        public async Task<IActionResult> CreateCliente([FromBody] ClienteCreateDTO dto)
-        {
-            var persona = await context.Personas.FindAsync(dto.IdPersona);
-            if (persona == null) return NotFound("La persona no existe.");
+        return Ok(await clienteService.GetPagedAsync(search, page, pageSize));
+    }
 
-            var existeCliente = await context.Clientes.AnyAsync(c => c.IdPersona == dto.IdPersona);
-            if (existeCliente) return BadRequest("Esta persona ya es cliente.");
+    [HttpGet("buscar")]
+    public async Task<IActionResult> Buscar([FromQuery] string filtro)
+    {
+        var cliente = await clienteService.GetByIdOrFiltroAsync(filtro);
+        return cliente != null ? Ok(cliente) : NotFound("Cliente no encontrado.");
+    }
 
-            var nuevoCliente = new Cliente { IdPersona = dto.IdPersona };
-            context.Clientes.Add(nuevoCliente);
-            await context.SaveChangesAsync();
+    [HttpGet("{id}/historial")]
+    public async Task<IActionResult> GetHistorial(int id)
+    {
+        return Ok(await clienteService.GetHistorialAsync(id));
+    }
 
-            return Ok(new { idCliente = nuevoCliente.IdCliente, mensaje = "Cliente creado con éxito" });
-        }
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] ClienteCreateDTO dto)
+    {
+        var result = await clienteService.CreateAsync(dto);
+        return result.Success ? Ok(result) : BadRequest(result.Message);
+    }
 
-        [HttpGet("buscar")]
-        public async Task<ActionResult<ClienteDetalleDTO>> Buscar([FromQuery] string filtro)
-        {
-            var cliente = await context.Clientes
-                .Include(c => c.Persona)
-                .Where(c => c.Persona!.DPI == filtro || c.Persona.Telefono == filtro)
-                .Select(c => new ClienteDetalleDTO(
-                    c.IdCliente,
-                    $"{c.Persona!.Nombres} {c.Persona.Apellidos}",
-                    c.Persona.DPI ?? "N/A",
-                    c.Persona.Telefono,
-                    c.Persona.Gmail ?? "N/A"
-                )).FirstOrDefaultAsync();
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> Patch(int id, [FromBody] ClientePatchDTO dto)
+    {
+        var result = await clienteService.PatchAsync(id, dto);
+        return result.Success ? Ok(new { mensaje = result.Message }) : NotFound(result.Message);
+    }
 
-            if (cliente == null) return NotFound("Cliente no encontrado.");
-            return Ok(cliente);
-        }
-
-        [HttpGet("{idCliente}/historial")]
-        public async Task<ActionResult<IEnumerable<HistorialReservaDTO>>> GetHistorial(int idCliente)
-        {
-            var historial = await context.RegistroReservacion
-                .Where(r => r.IdCliente == idCliente)
-                .OrderByDescending(r => r.FechaEntrada)
-                .Select(r => new HistorialReservaDTO(
-                    r.Id, r.FechaEntrada, r.FechaSalida, r.EstadoReserva, r.TotalPagar
-                )).ToListAsync();
-
-            return Ok(historial);
-        }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var result = await clienteService.DeleteAsync(id);
+        return result.Success ? Ok(new { mensaje = result.Message }) : BadRequest(result.Message);
+    }
 }
