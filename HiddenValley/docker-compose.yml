@@ -1,13 +1,29 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: hiddenvalley-db
+    restart: always 
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: Umg12345
+      POSTGRES_DB: HiddenValleyDB
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/Tablas.sql:/docker-entrypoint-initdb.d/01-tablas.sql:ro
+
   api:
     build:
-      context: ./HiddenValley.API
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: HiddenValley.API/Dockerfile
     ports:
       - "7084:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - DB_CONNECTION=Server=host.docker.internal;Database=HiddenValleyDB;User Id=tu_usuario;Password=tu_password;TrustServerCertificate=True
+      - ConnectionStrings__DefaultConnection=Host=db;Database=HiddenValleyDB;Username=admin;Password=Umg12345
+    depends_on:
+      - db
 
   frontend:
     build:
@@ -19,3 +35,6 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
     depends_on:
       - api
+
+volumes:
+  postgres_data:

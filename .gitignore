@@ -1,3 +1,82 @@
-﻿HiddenValley/HiddenValley.API/obj
+<<<<<<< HEAD
+## .NET / C# ##
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+## Build results ##
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+## NuGet ##
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+packages/
+
+## ASP.NET ##
+wwwroot/lib/
+
+## Environment files ##
+.env
+*.env
+
+## OS ##
+.DS_Store
+Thumbs.db
 HiddenValley/HiddenValley.Frontend/obj
+HiddenValley/HiddenValley.Shared/obj/Debug
+HiddenValley/HiddenValley.Shared/obj/Debug
 HiddenValley/HiddenValley.Shared/obj
+HiddenValley/HiddenValley.Frontend/obj/Debug
+HiddenValley/HiddenValley.Frontend/obj/Debug
+=======
+<<<<<<< HEAD
+**/obj/
+**/bin/
+.vs/
+=======
+# Build results
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# .NET
+*.dll
+*.exe
+*.pdb
+*.cache
+project.assets.json
+project.nuget.cache
+
+# Environment
+.env
+.env.local
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+>>>>>>> origin/main
+>>>>>>> origin/main
