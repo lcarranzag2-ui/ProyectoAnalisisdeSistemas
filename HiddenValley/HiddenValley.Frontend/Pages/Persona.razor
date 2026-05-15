@@ -1,0 +1,181 @@
+@page "/personas"
+@using HiddenValley.Shared.DTOs
+@using HiddenValley.Frontend.Interfaces
+@inject IPersonaClient PersonaService
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-primary"><i class="bi bi-people-fill me-2"></i>Administración de Personas</h3>
+    </div>
+
+    @* Formulario de Registro *@
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Registrar Nueva Persona</h5>
+        </div>
+        <div class="card-body">
+            <EditForm Model="@nuevaPersona" OnValidSubmit="HandleRegistration">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Nombres</label>
+                        <InputText @bind-Value="nuevaPersona.Nombres" class="form-control" placeholder="Ej. Juan Carlos" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Apellidos</label>
+                        <InputText @bind-Value="nuevaPersona.Apellidos" class="form-control" placeholder="Ej. Pérez Gómez" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">DPI</label>
+                        <InputText @bind-Value="nuevaPersona.DPI" class="form-control" placeholder="1234 56789 0101" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Teléfono</label>
+                        <InputText @bind-Value="nuevaPersona.Telefono" class="form-control" placeholder="5555-5555" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Correo Electrónico</label>
+                        <InputText @bind-Value="nuevaPersona.Gmail" class="form-control" placeholder="juan@gmail.com" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Dirección</label>
+                        <InputText @bind-Value="nuevaPersona.Direccion" class="form-control" placeholder="Ciudad de Guatemala" required />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Tipo Persona</label>
+                        <InputSelect @bind-Value="nuevaPersona.TipoPersona" class="form-control">
+                            <option value="Cliente">Cliente</option>
+                            <option value="Empleado">Empleado</option>
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="mt-3 text-end">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-1"></i>Guardar Registro
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+
+    @* Sección de la Tabla de Datos con Estados *@
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @if (listaPersonas == null)
+            {
+                <div class="p-5 text-center">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <p class="text-muted mb-0">Conectando con la API y cargando registros...</p>
+                </div>
+            }
+            else if (!listaPersonas.Any())
+            {
+                <div class="p-5 text-center text-muted">
+                    <i class="bi bi-folder-symlink h1"></i>
+                    <p class="mt-2 mb-0">No se encontraron personas registradas en la base de datos.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nombre Completo</th>
+                                <th>DPI</th>
+                                <th>Teléfono</th>
+                                <th>Correo</th>
+                                <th>Dirección</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in listaPersonas)
+                            {
+                                <tr>
+                                    <td>@p.Nombres @p.Apellidos</td>
+                                    <td><span class="badge bg-secondary">@p.DPI</span></td>
+                                    <td>@p.Telefono</td>
+                                    <td>@p.Gmail</td>
+                                    <td>@p.Direccion</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-danger btn-sm" @onclick="() => EliminarPersona(p.IdPersona)">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private PersonaCreateDto nuevaPersona = new() { TipoPersona = "Cliente" };
+    private List<PersonaResponseDto>? listaPersonas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPersonas();
+    }
+
+    private async Task CargarPersonas()
+    {
+        try
+        {
+            // Llama al servicio del Frontend
+            var res = await PersonaService.GetPersonasAsync();
+            
+            // ADAPTACIÓN: Mapeamos usando .Items que es la propiedad que tu API envía
+            listaPersonas = res.Items?.ToList() ?? new List<PersonaResponseDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error de comunicación en el componente: {ex.Message}");
+            listaPersonas = new List<PersonaResponseDto>(); // Evita que se quede colgado en "Cargando..."
+        }
+        finally
+        {
+            // Obliga al navegador a redibujar el HTML con los nuevos datos
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleRegistration()
+    {
+        try
+        {
+            var exito = await PersonaService.CrearPersonaAsync(nuevaPersona);
+            if (exito)
+            {
+                // Limpia el formulario manteniendo el valor por defecto
+                nuevaPersona = new() { TipoPersona = "Cliente" };
+                
+                // Refresca la tabla automáticamente
+                await CargarPersonas();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al registrar: {ex.Message}");
+        }
+    }
+
+    private async Task EliminarPersona(int id)
+    {
+        try
+        {
+            var exito = await PersonaService.EliminarPersonaAsync(id);
+            if (exito)
+            {
+                await CargarPersonas();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar: {ex.Message}");
+        }
+    }
+}

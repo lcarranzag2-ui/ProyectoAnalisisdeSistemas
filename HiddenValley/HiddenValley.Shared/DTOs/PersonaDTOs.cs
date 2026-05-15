@@ -11,6 +11,7 @@ public class PersonaCreateDto
     public string Telefono { get; set; } = string.Empty;
     public string Gmail { get; set; } = string.Empty;
     public string Direccion { get; set; } = string.Empty;
+    public string TipoPersona { get; set; } = "Cliente";
 }
 
 public class PersonaPatchDto
@@ -29,4 +30,12 @@ public class PersonaResponseDto
     public string Telefono { get; set; } = string.Empty;
     public string Gmail { get; set; } = string.Empty;
     public string Direccion { get; set; } = string.Empty;
+    public string TipoPersona { get; set; } = string.Empty;
+}
+public class PagedResponsePersona<T>
+{
+    public IEnumerable<T> Items { get; set; } = new List<T>();
+    public int TotalRecords { get; set; }
+    public int CurrentPage { get; set; }
+    public int PageSize { get; set; }
 }
