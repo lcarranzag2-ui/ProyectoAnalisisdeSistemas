@@ -27,8 +27,8 @@ services:
 
   frontend:
     build:
-      context: ./HiddenValley.Frontend
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: HiddenValley.Frontend/Dockerfile
     ports:
       - "7075:80"
     environment:
