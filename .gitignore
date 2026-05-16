@@ -80,3 +80,6 @@ project.nuget.cache
 Thumbs.db
 >>>>>>> origin/main
 >>>>>>> origin/main
+HiddenValley/HiddenValley.API/HiddenValley.API.csproj.lscache
+HiddenValley/HiddenValley.Frontend/HiddenValley.Frontend.csproj.lscache
+HiddenValley/HiddenValley.Shared/HiddenValley.Shared.csproj.lscache

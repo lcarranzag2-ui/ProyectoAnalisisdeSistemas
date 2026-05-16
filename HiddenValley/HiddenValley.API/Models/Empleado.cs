@@ -1,14 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.Extensions.Configuration.UserSecrets;
 
 namespace HiddenValley.API.Models;
 
-[Table("Empleado")]
+[Table("empleado")]
 public class Empleado
 {
     [Key]
+    [Column("idempleado")] 
     public int IdEmpleado { get; set; }
 
+    [Column("idpersona")]
     public int IdPersona { get; set; }
 
     public int IdPuestoTrabajo { get; set; }
@@ -18,6 +21,7 @@ public class Empleado
 
     [ForeignKey(nameof(IdPuestoTrabajo))]
     public PuestoTrabajo? PuestoTrabajo { get; set; }
+
 }
 
 // DTO entrada

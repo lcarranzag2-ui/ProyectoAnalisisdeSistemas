@@ -53,11 +53,19 @@ CREATE TABLE Cabana(
   CONSTRAINT fk_estado FOREIGN KEY(IdEstadoCabana) REFERENCES EstadoCabana(IdEstadoCabana) ON DELETE RESTRICT
 );
 
+CREATE TABLE TipoServicio (
+  IdTipoServicio SERIAL PRIMARY KEY,
+  Nombre VARCHAR(50) NOT NULL,
+  Descripcion TEXT
+);
+
 CREATE TABLE Servicio (
   IdServicio SERIAL PRIMARY KEY,
+  IdTipoServicio INTEGER,
   Nombre VARCHAR(50) NOT NULL UNIQUE,
   Descripcion TEXT,
-  Precio DECIMAL(10,2) NOT NULL CHECK(Precio >= 0)
+  Precio DECIMAL(10,2) NOT NULL CHECK(Precio >= 0),
+  CONSTRAINT fk_tiposervicio FOREIGN KEY(IdTipoServicio) REFERENCES TipoServicio(IdTipoServicio) ON DELETE RESTRICT
 );
 
 CREATE TABLE RegistroReservacion(

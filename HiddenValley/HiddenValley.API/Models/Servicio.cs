@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -12,12 +8,21 @@ namespace HiddenValley.API.Models
     {
         [Key]
         [Column("idservicio")]
-        public int IdServicio {get; set;}
+        public int IdServicio { get; set; }
+
+        [Column("idtiposervicio")]
+        public int? IdTipoServicio { get; set; }
+
         [Column("nombre")]
-        public string? Nombre {get; set;}
+        public string? Nombre { get; set; }
+
         [Column("descripcion")]
-        public string? Descripcion {get; set;}
+        public string? Descripcion { get; set; }
+
         [Column("precio")]
-        public decimal Precio {get; set;}
+        public decimal Precio { get; set; }
+
+        // navegacion hacia el tipo de servicio
+        public virtual TipoServicio? TipoServicio { get; set; }
     }
 }

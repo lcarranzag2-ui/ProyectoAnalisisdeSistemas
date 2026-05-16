@@ -17,13 +17,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IServicioService, ServicioService>();
+builder.Services.AddScoped<ITipoServicioService, TipoServicioService>();
+builder.Services.AddScoped<IPuestoTrabajoService, PuestoTrabajoService>();
 builder.Services.AddScoped<ICabanaService, CabanaService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 builder.Services.AddScoped<IPersonaService, PersonaService>();
 builder.Services.AddScoped<ITipoCabanaService, TipoCabanaService>();
-builder.Services.AddScoped<IPuestoTrabajoService, PuestoTrabajoService>();
-builder.Services.AddScoped<IReservacionService, ReservacionService>();
+builder.Services.AddScoped<IReservacionServicio, ReservacionServicioService>();
 
 builder.Services.AddControllers();
 
