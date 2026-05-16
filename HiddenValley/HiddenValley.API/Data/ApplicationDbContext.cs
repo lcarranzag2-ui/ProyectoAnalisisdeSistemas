@@ -28,6 +28,9 @@ namespace HiddenValley.API.Data
         // Módulo Servicios (PROYECT-75)
         public DbSet<Servicio> Servicio => Set<Servicio>();
 
+        // Módulo Tipo Servicio (PROYECT-69)
+        public DbSet<TipoServicio> TiposServicio { get; set; }
+
         // Módulo Empleados (PROYECT-66)
         public DbSet<PuestoTrabajo> PuestosTrabajo { get; set; }
         public DbSet<Empleado> Empleados { get; set; }
@@ -148,8 +151,24 @@ namespace HiddenValley.API.Data
                 .WithMany(c => c.Reservaciones)
                 .HasForeignKey(r => r.IdCabana);
 
+            // ===== Módulo Tipo Servicio (PROYECT-69) =====
+            modelBuilder.Entity<TipoServicio>().ToTable("tiposervicio");
+            modelBuilder.Entity<TipoServicio>(entity =>
+            {
+                entity.Property(e => e.IdTipoServicio).HasColumnName("idtiposervicio");
+                entity.Property(e => e.Nombre).HasColumnName("nombre");
+                entity.Property(e => e.Descripcion).HasColumnName("descripcion");
+            });
+
             // ===== Módulo Servicios (PROYECT-75) =====
             modelBuilder.Entity<Servicio>().ToTable("servicio");
+
+            // relacion servicio -> tiposervicio
+            modelBuilder.Entity<Servicio>()
+                .HasOne(s => s.TipoServicio)
+                .WithMany(t => t.Servicios)
+                .HasForeignKey(s => s.IdTipoServicio)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // ===== Módulo Reservación-Servicio (Detalle) =====
             modelBuilder.Entity<ReservacionServicio>().ToTable("reservacionservicio");

@@ -17,6 +17,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IServicioService, ServicioService>();
+builder.Services.AddScoped<ITipoServicioService, TipoServicioService>();
 builder.Services.AddScoped<IPuestoTrabajoService, PuestoTrabajoService>();
 builder.Services.AddScoped<ICabanaService, CabanaService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();

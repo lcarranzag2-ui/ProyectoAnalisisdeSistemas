@@ -1,10 +1,16 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY ["HiddenValley.Frontend.csproj", "./"]
-RUN dotnet restore "HiddenValley.Frontend.csproj"
+# Copiar los csproj primero para aprovechar cache de Docker
+COPY ["HiddenValley.Frontend/HiddenValley.Frontend.csproj", "HiddenValley.Frontend/"]
+COPY ["HiddenValley.Shared/HiddenValley.Shared.csproj", "HiddenValley.Shared/"]
+RUN dotnet restore "HiddenValley.Frontend/HiddenValley.Frontend.csproj"
 
-COPY . .
+# Copiar el resto del codigo
+COPY HiddenValley.Frontend/ HiddenValley.Frontend/
+COPY HiddenValley.Shared/ HiddenValley.Shared/
+
+WORKDIR /src/HiddenValley.Frontend
 RUN dotnet build "HiddenValley.Frontend.csproj" -c Release -o /app/build
 
 FROM build AS publish
