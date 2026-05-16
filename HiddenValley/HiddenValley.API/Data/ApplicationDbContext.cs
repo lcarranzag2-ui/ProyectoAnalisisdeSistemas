@@ -31,6 +31,7 @@ namespace HiddenValley.API.Data
         // Módulo Empleados (PROYECT-66)
         public DbSet<PuestoTrabajo> PuestosTrabajo { get; set; }
         public DbSet<Empleado> Empleados { get; set; }
+        public DbSet<ReservacionServicio> ReservacionServicios { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,13 +42,15 @@ namespace HiddenValley.API.Data
             modelBuilder.Entity<EstadoCabana>().ToTable("estadocabana");
             modelBuilder.Entity<BitacoraEstados>().ToTable("bitacoraestados");
 
-            modelBuilder.Entity<Cabana>(entity => {
+            modelBuilder.Entity<Cabana>(entity =>
+            {
                 entity.Property(e => e.IdCabana).HasColumnName("idcabana");
                 entity.Property(e => e.IdTipoCabana).HasColumnName("idtipocabana");
                 entity.Property(e => e.IdEstadoCabana).HasColumnName("idestadocabana");
             });
 
-            modelBuilder.Entity<TipoCabana>(entity => {
+            modelBuilder.Entity<TipoCabana>(entity =>
+            {
                 entity.Property(e => e.IdTipoCabana).HasColumnName("idtipocabana");
                 entity.Property(e => e.Nombre).HasColumnName("nombre");
                 entity.Property(e => e.Descripcion).HasColumnName("descripcion");
@@ -55,14 +58,16 @@ namespace HiddenValley.API.Data
                 entity.Property(e => e.Precio).HasColumnName("precio");
             });
 
-            modelBuilder.Entity<EstadoCabana>(entity => {
+            modelBuilder.Entity<EstadoCabana>(entity =>
+            {
                 entity.Property(e => e.IdEstadoCabana).HasColumnName("idestadocabana");
                 entity.Property(e => e.Nombre).HasColumnName("nombre");
                 entity.Property(e => e.Descripcion).HasColumnName("descripcion");
                 entity.HasIndex(e => e.Nombre).IsUnique();
             });
 
-            modelBuilder.Entity<BitacoraEstados>(entity => {
+            modelBuilder.Entity<BitacoraEstados>(entity =>
+            {
                 entity.Property(e => e.IdBitacoraEstado).HasColumnName("idbitacoraestado");
                 entity.Property(e => e.IdEstadoAnterior).HasColumnName("idestadoanterior");
                 entity.Property(e => e.IdEstadoNuevo).HasColumnName("idestadonuevo");
@@ -145,6 +150,33 @@ namespace HiddenValley.API.Data
 
             // ===== Módulo Servicios (PROYECT-75) =====
             modelBuilder.Entity<Servicio>().ToTable("servicio");
+
+            // ===== Módulo Reservación-Servicio (Detalle) =====
+            modelBuilder.Entity<ReservacionServicio>().ToTable("reservacionservicio");
+
+            modelBuilder.Entity<ReservacionServicio>(entity =>
+            {
+                // Definir Llave Primaria Compuesta
+                entity.HasKey(e => new { e.IdReservacion, e.IdServicio });
+
+                // Mapeo de Columnas
+                entity.Property(e => e.IdReservacion).HasColumnName("idreservacion");
+                entity.Property(e => e.IdServicio).HasColumnName("idservicio");
+                entity.Property(e => e.Cantidad).HasColumnName("cantidad");
+
+                // Relación con RegistroReservacion
+                entity.HasOne(d => d.Reservacion)
+                    .WithMany(p => p.ReservacionServicios) 
+                    .HasForeignKey(d => d.IdReservacion)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("fk_reserva");
+
+                // Relación con Servicio
+                entity.HasOne(d => d.Servicio)
+                    .WithMany() 
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("fk_servicio");
+            });
 
             // ===== Módulo Empleados (PROYECT-66) =====
             modelBuilder.Entity<Empleado>()
