@@ -3,111 +3,337 @@
 @using HiddenValley.Frontend.Interfaces
 @inject IPersonaClient PersonaService
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="text-primary"><i class="bi bi-people-fill me-2"></i>Administración de Personas</h3>
+<style>
+    :root {
+        --hv-green-dark: #1e3d1a;
+        --hv-green: #2d5a27;
+        --hv-green-light: #e8f5e9;
+        --hv-brown: #5d4037;
+        --hv-brown-light: #efebe9;
+        --hv-yellow: #fbc02d;
+        --hv-yellow-light: #fffde7;
+        --hv-text: #2c3e50;
+    }
+
+    .hv-container {
+        color: var(--hv-text);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Tarjetas Estilizadas */
+    .hv-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        background: #ffffff;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .hv-card-header {
+        background: linear-gradient(135deg, var(--hv-green-dark), var(--hv-green));
+        color: white;
+        padding: 1.25rem 1.5rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    /* Botones Personalizados con texto */
+    .btn-hv {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+    }
+
+    .btn-hv-submit {
+        background-color: var(--hv-green);
+        color: white;
+    }
+    .btn-hv-submit:hover {
+        background-color: var(--hv-green-dark);
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    .btn-hv-edit {
+        background-color: var(--hv-yellow);
+        color: #212121;
+    }
+    .btn-hv-edit:hover {
+        background-color: #f5b041;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+
+    .btn-hv-delete {
+        background-color: #e74c3c;
+        color: white;
+    }
+    .btn-hv-delete:hover {
+        background-color: #c0392b;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+
+    .btn-hv-save {
+        background-color: #2ecc71;
+        color: white;
+    }
+    .btn-hv-save:hover { background-color: #27ae60; }
+
+    .btn-hv-cancel {
+        background-color: #95a5a6;
+        color: white;
+    }
+    .btn-hv-cancel:hover { background-color: #7f8c8d; }
+
+    /* Buscador elegante */
+    .search-wrapper {
+        background: white;
+        border: 2px solid var(--hv-green);
+        border-radius: 30px;
+        padding: 0.3rem 0.5rem 0.3rem 1.2rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .search-input {
+        border: none;
+        outline: none;
+        width: 100%;
+        padding: 0.4rem;
+        font-size: 0.95rem;
+    }
+
+    /* Tabla Premium */
+    .hv-table-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+        background: white;
+        overflow: hidden;
+    }
+
+    .table-hv {
+        margin-bottom: 0;
+    }
+
+    .table-hv th {
+        background-color: var(--hv-brown);
+        color: white;
+        font-weight: 500;
+        padding: 1rem;
+        border: none;
+    }
+
+    .table-hv td {
+        padding: 1.1rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f2f2f2;
+    }
+
+    .table-hv tbody tr:hover {
+        background-color: var(--hv-brown-light) !important;
+    }
+
+    .badge-dpi {
+        background-color: var(--hv-brown);
+        color: white;
+        padding: 0.4rem 0.7rem;
+        border-radius: 6px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-tipo {
+        background-color: var(--hv-green-light);
+        color: var(--hv-green-dark);
+        padding: 0.3rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container mt-4 hv-container">
+    @* Encabezado Principal *@
+    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+        <h2 class="text-hv-brown fw-bold m-0 d-flex align-items-center">
+            <i class="bi bi-tree-fill me-3 text-success fs-1"></i>
+            Hidden Valley — Panel Administrativo
+        </h2>
     </div>
 
-    @* Formulario de Registro *@
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light">
-            <h5 class="card-title mb-0">Registrar Nueva Persona</h5>
+    @* Formulario de Registro Estilizado *@
+    <div class="card hv-card">
+        <div class="hv-card-header">
+            <i class="bi bi-person-plus-fill me-2"></i> Registrar Nueva Persona en el Valle
         </div>
-        <div class="card-body">
+        <div class="card-body p-4" style="background-color: #fdfcf7;">
             <EditForm Model="@nuevaPersona" OnValidSubmit="HandleRegistration">
                 <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Nombres</label>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">NOMBRES</label>
                         <InputText @bind-Value="nuevaPersona.Nombres" class="form-control" placeholder="Ej. Juan Carlos" required />
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Apellidos</label>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">APELLIDOS</label>
                         <InputText @bind-Value="nuevaPersona.Apellidos" class="form-control" placeholder="Ej. Pérez Gómez" required />
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">DPI</label>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">DPI (CUI)</label>
                         <InputText @bind-Value="nuevaPersona.DPI" class="form-control" placeholder="1234 56789 0101" required />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Teléfono</label>
+                        <label class="form-label small fw-bold text-muted">FECHA DE NACIMIENTO</label>
+                        <input type="date" class="form-control" @onchange="@(e => nuevaPersona.FechaNacimiento = string.IsNullOrEmpty(e.Value?.ToString()) ? null : DateOnly.Parse(e.Value.ToString()!))" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">TELÉFONO</label>
                         <InputText @bind-Value="nuevaPersona.Telefono" class="form-control" placeholder="5555-5555" required />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Correo Electrónico</label>
-                        <InputText @bind-Value="nuevaPersona.Gmail" class="form-control" placeholder="juan@gmail.com" />
+                        <label class="form-label small fw-bold text-muted">CORREO ELECTRÓNICO</label>
+                        <InputText @bind-Value="nuevaPersona.Gmail" class="form-control" placeholder="ejemplo@gmail.com" />
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Dirección</label>
-                        <InputText @bind-Value="nuevaPersona.Direccion" class="form-control" placeholder="Ciudad de Guatemala" required />
+                        <label class="form-label small fw-bold text-muted">DIRECCIÓN DE RESIDENCIA</label>
+                        <InputText @bind-Value="nuevaPersona.Direccion" class="form-control" placeholder="Ciudad de Guatemala, Guatemala" required />
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Tipo Persona</label>
-                        <InputSelect @bind-Value="nuevaPersona.TipoPersona" class="form-control">
-                            <option value="Cliente">Cliente</option>
-                            <option value="Empleado">Empleado</option>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">TIPO DE MIEMBRO</label>
+                        <InputSelect @bind-Value="nuevaPersona.TipoPersona" class="form-select">
+                            <option value="Cliente">Cliente </option>
+                            <option value="Empleado">Empleado </option>
                         </InputSelect>
                     </div>
                 </div>
-                <div class="mt-3 text-end">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-plus-circle me-1"></i>Guardar Registro
+                <div class="mt-4 text-end">
+                    <button type="submit" class="btn-hv btn-hv-submit shadow-sm px-4">
+                        <i class="bi bi-cloud-arrow-up-fill fs-5"></i> Guardar Registro
                     </button>
                 </div>
             </EditForm>
         </div>
     </div>
 
-    @* Sección de la Tabla de Datos con Estados *@
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            @if (listaPersonas == null)
-            {
-                <div class="p-5 text-center">
-                    <div class="spinner-border text-primary mb-2" role="status"></div>
-                    <p class="text-muted mb-0">Conectando con la API y cargando registros...</p>
-                </div>
-            }
-            else if (!listaPersonas.Any())
-            {
-                <div class="p-5 text-center text-muted">
-                    <i class="bi bi-folder-symlink h1"></i>
-                    <p class="mt-2 mb-0">No se encontraron personas registradas en la base de datos.</p>
-                </div>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped mb-0">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Nombre Completo</th>
-                                <th>DPI</th>
-                                <th>Teléfono</th>
-                                <th>Correo</th>
-                                <th>Dirección</th>
-                                <th class="text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var p in listaPersonas)
-                            {
-                                <tr>
-                                    <td>@p.Nombres @p.Apellidos</td>
-                                    <td><span class="badge bg-secondary">@p.DPI</span></td>
-                                    <td>@p.Telefono</td>
-                                    <td>@p.Gmail</td>
-                                    <td>@p.Direccion</td>
-                                    <td class="text-center">
-                                        <button class="btn btn-danger btn-sm" @onclick="() => EliminarPersona(p.IdPersona)">
-                                            <i class="bi bi-trash-fill"></i>
-                                        </button>
+    @* Sección de Filtros y Estadísticas Intermedias *@
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-7">
+            <div class="search-wrapper">
+                <i class="bi bi-search text-success fs-5 me-2"></i>
+                <input type="text" class="search-input" placeholder="Filtrar instantáneamente por nombre, apellido o DPI..." 
+                       @bind="searchTerm" @bind:event="oninput" @onkeyup="HandleSearch" />
+            </div>
+        </div>
+        <div class="col-md-5 text-end">
+            <div class="d-inline-block bg-white px-3 py-2 rounded-pill shadow-sm border border-light">
+                <span class="text-muted small fw-bold me-2">LISTA DE PERSONAS:</span>
+                <span class="badge bg-success fs-6 rounded-pill">@(listaPersonas?.Count ?? 0)</span>
+            </div>
+        </div>
+    </div>
+
+    @* Tabla de Personas Remodelada *@
+    <div class="hv-table-card card">
+        <div class="table-responsive">
+            <table class="table table-hv align-middle">
+                <thead>
+                    <tr>
+                        <th style="border-top-left-radius: 12px;">Identificación de Persona</th>
+                        <th>Documento DPI</th>
+                        <th>Datos de Contacto</th>
+                        <th>Ubicación</th>
+                        <th class="text-center" style="border-top-right-radius: 12px; width: 260px;">Acciones de Gestión</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (listaPersonas == null)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center p-5">
+                                <div class="spinner-border text-success" role="status"></div>
+                                <div class="text-muted mt-2">Sincronizando información...</div>
+                            </td>
+                        </tr>
+                    }
+                    else if (!listaPersonas.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center p-5 text-muted">
+                                <i class="bi bi-tree h1 text-warning"></i>
+                                <p class="mt-3 mb-0 fw-bold">El Valle está despejado. No hay registros coincidentes.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var p in listaPersonas)
+                        {
+                            <tr style="@(personaEdicion?.IdPersona == p.IdPersona ? "background-color: var(--hv-yellow-light);" : "")">
+                                <td>
+                                    <div class="fw-bold fs-5 text-dark">@p.Nombres @p.Apellidos</div>
+                                    <div class="mt-1"><span class="badge-tipo">@p.TipoPersona</span></div>
+                                </td>
+                                <td><span class="badge-dpi">@p.DPI</span></td>
+                                
+                                @if (personaEdicion?.IdPersona == p.IdPersona)
+                                {
+                                    @* REGISTRO EN MODO EDICIÓN INLINE *@
+                                    <td>
+                                        <div class="input-group input-group-sm mb-1">
+                                            <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                            <input class="form-control" @bind="personaEdicion.Telefono" />
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                            <input class="form-control" @bind="personaEdicion.Gmail" />
+                                        </div>
                                     </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                            <input class="form-control" @bind="personaEdicion.Direccion" />
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex gap-2 justify-content-center">
+                                            <button class="btn-hv btn-hv-save btn-sm" @onclick="GuardarCambios">
+                                                <i class="bi bi-check-circle-fill"></i> Guardar
+                                            </button>
+                                            <button class="btn-hv btn-hv-cancel btn-sm" @onclick="() => personaEdicion = null">
+                                                <i class="bi bi-x-circle-fill"></i> Cancelar
+                                            </button>
+                                        </div>
+                                    </td>
+                                }
+                                else
+                                {
+                                    @* REGISTRO EN MODO LECTURA NORMAL *@
+                                    <td>
+                                        <div class="small text-dark mb-1"><i class="bi bi-telephone-fill me-2 text-success"></i>@p.Telefono</div>
+                                        <div class="small text-muted"><i class="bi bi-envelope-fill me-2 text-success"></i>@p.Gmail</div>
+                                    </td>
+                                    <td class="small"><i class="bi bi-geo-alt-fill me-2 text-success"></i>@p.Direccion</td>
+                                    <td class="text-center">
+                                        <div class="d-flex gap-2 justify-content-center">
+                                            <button class="btn-hv btn-hv-edit btn-sm" @onclick="() => IniciarEdicion(p)">
+                                                <i class="bi bi-pencil-square"></i> Editar
+                                            </button>
+                                            <button class="btn-hv btn-hv-delete btn-sm" @onclick="() => EliminarPersona(p.IdPersona)">
+                                                <i class="bi bi-trash3-fill"></i> Eliminar
+                                            </button>
+                                        </div>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -115,67 +341,69 @@
 @code {
     private PersonaCreateDto nuevaPersona = new() { TipoPersona = "Cliente" };
     private List<PersonaResponseDto>? listaPersonas;
+    private string searchTerm = "";
+    private PersonaResponseDto? personaEdicion;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await CargarPersonas();
-    }
+    protected override async Task OnInitializedAsync() => await CargarPersonas();
 
     private async Task CargarPersonas()
     {
-        try
-        {
-            // Llama al servicio del Frontend
-            var res = await PersonaService.GetPersonasAsync();
-            
-            // ADAPTACIÓN: Mapeamos usando .Items que es la propiedad que tu API envía
-            listaPersonas = res.Items?.ToList() ?? new List<PersonaResponseDto>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error de comunicación en el componente: {ex.Message}");
-            listaPersonas = new List<PersonaResponseDto>(); // Evita que se quede colgado en "Cargando..."
-        }
-        finally
-        {
-            // Obliga al navegador a redibujar el HTML con los nuevos datos
-            StateHasChanged();
-        }
+        var res = await PersonaService.GetPersonasAsync(searchTerm);
+        listaPersonas = res.Items?.ToList();
+        StateHasChanged();
     }
+
+    private async Task HandleSearch() => await CargarPersonas();
 
     private async Task HandleRegistration()
     {
-        try
+        if (await PersonaService.CrearPersonaAsync(nuevaPersona))
         {
-            var exito = await PersonaService.CrearPersonaAsync(nuevaPersona);
-            if (exito)
-            {
-                // Limpia el formulario manteniendo el valor por defecto
-                nuevaPersona = new() { TipoPersona = "Cliente" };
-                
-                // Refresca la tabla automáticamente
-                await CargarPersonas();
-            }
+            nuevaPersona = new() { TipoPersona = "Cliente" };
+            await CargarPersonas();
         }
-        catch (Exception ex)
+    }
+
+    private void IniciarEdicion(PersonaResponseDto p)
+    {
+        personaEdicion = new PersonaResponseDto 
+        { 
+            IdPersona = p.IdPersona,
+            Telefono = p.Telefono,
+            Gmail = p.Gmail,
+            Direccion = p.Direccion 
+        };
+    }
+
+    private async Task GuardarCambios()
+    {
+        if (personaEdicion == null) return;
+
+        var patchDto = new PersonaPatchDto 
+        { 
+            Telefono = personaEdicion.Telefono,
+            Gmail = personaEdicion.Gmail,
+            Direccion = personaEdicion.Direccion
+        };
+
+        var response = await HttpPatchPersona(personaEdicion.IdPersona, patchDto);
+        
+        if (response)
         {
-            Console.WriteLine($"Error al registrar: {ex.Message}");
+            personaEdicion = null;
+            await CargarPersonas();
         }
+    }
+
+    @inject HttpClient Http
+    private async Task<bool> HttpPatchPersona(int id, PersonaPatchDto dto)
+    {
+        var res = await Http.PatchAsJsonAsync($"api/personas/{id}", dto);
+        return res.IsSuccessStatusCode;
     }
 
     private async Task EliminarPersona(int id)
     {
-        try
-        {
-            var exito = await PersonaService.EliminarPersonaAsync(id);
-            if (exito)
-            {
-                await CargarPersonas();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al eliminar: {ex.Message}");
-        }
+        if (await PersonaService.EliminarPersonaAsync(id)) await CargarPersonas();
     }
 }
