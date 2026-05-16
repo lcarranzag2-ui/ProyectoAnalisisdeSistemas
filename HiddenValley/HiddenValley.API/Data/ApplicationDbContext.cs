@@ -41,6 +41,7 @@ namespace HiddenValley.API.Data
             modelBuilder.Entity<EstadoCabana>().ToTable("estadocabana");
             modelBuilder.Entity<BitacoraEstados>().ToTable("bitacoraestados");
 
+
             modelBuilder.Entity<Cabana>(entity => {
                 entity.Property(e => e.IdCabana).HasColumnName("idcabana");
                 entity.Property(e => e.IdTipoCabana).HasColumnName("idtipocabana");
@@ -146,7 +147,26 @@ namespace HiddenValley.API.Data
             // ===== Módulo Servicios (PROYECT-75) =====
             modelBuilder.Entity<Servicio>().ToTable("servicio");
 
-            // ===== Módulo Empleados (PROYECT-66) =====
+            // ===== Módulo Empleados - PuestoTrabajo =====
+            modelBuilder.Entity<PuestoTrabajo>().ToTable("puestotrabajo");
+            modelBuilder.Entity<PuestoTrabajo>(entity =>
+            {
+                entity.Property(p => p.IdPuestoTrabajo).HasColumnName("idpuestotrabajo");
+                entity.Property(p => p.Nombre).HasColumnName("nombre");
+                entity.Property(p => p.Descripcion).HasColumnName("descripcion");
+            });
+
+
+            // ===== Módulo Empleados (PROYECT-66)  =====
+            modelBuilder.Entity<Empleado>().ToTable("empleado");
+            modelBuilder.Entity<Empleado>(entity =>
+            {                entity.Property(e => e.IdEmpleado).HasColumnName("idempleado");
+                entity.Property(e => e.IdPersona).HasColumnName("idpersona");
+                entity.Property(e => e.IdPuestoTrabajo).HasColumnName("idpuestotrabajo");
+                
+                entity.HasIndex(e => e.IdPersona).IsUnique();
+            });
+
             modelBuilder.Entity<Empleado>()
                 .HasOne(e => e.Persona)
                 .WithMany()
@@ -158,10 +178,6 @@ namespace HiddenValley.API.Data
                 .WithMany()
                 .HasForeignKey(e => e.IdPuestoTrabajo)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Empleado>()
-                .HasIndex(e => e.IdPersona)
-                .IsUnique();
         }
     }
 }
