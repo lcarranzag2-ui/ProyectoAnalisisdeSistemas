@@ -8,8 +8,10 @@ namespace HiddenValley.API.Models;
 public class Empleado
 {
     [Key]
+    [Column("idempleado")] 
     public int IdEmpleado { get; set; }
 
+    [Column("idpersona")]
     public int IdPersona { get; set; }
 
     public int IdPuestoTrabajo { get; set; }

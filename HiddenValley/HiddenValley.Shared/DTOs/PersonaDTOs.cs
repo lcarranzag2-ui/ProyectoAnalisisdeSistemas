@@ -16,6 +16,9 @@ public class PersonaCreateDto
 
 public class PersonaPatchDto
 {
+    public string Nombres { get; set; } = string.Empty;
+    public string Apellidos { get; set; } = string.Empty;
+    public string DPI { get; set; } = string.Empty;
     public string? Telefono { get; set; }
     public string? Gmail { get; set; }
     public string? Direccion { get; set; }

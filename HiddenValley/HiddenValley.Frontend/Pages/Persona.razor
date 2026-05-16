@@ -2,6 +2,7 @@
 @using HiddenValley.Shared.DTOs
 @using HiddenValley.Frontend.Interfaces
 @inject IPersonaClient PersonaService
+@inject IJSRuntime JS
 
 <style>
     :root {
@@ -274,15 +275,21 @@
                         @foreach (var p in listaPersonas)
                         {
                             <tr style="@(personaEdicion?.IdPersona == p.IdPersona ? "background-color: var(--hv-yellow-light);" : "")">
-                                <td>
-                                    <div class="fw-bold fs-5 text-dark">@p.Nombres @p.Apellidos</div>
-                                    <div class="mt-1"><span class="badge-tipo">@p.TipoPersona</span></div>
-                                </td>
-                                <td><span class="badge-dpi">@p.DPI</span></td>
-                                
                                 @if (personaEdicion?.IdPersona == p.IdPersona)
                                 {
                                     @* REGISTRO EN MODO EDICIÓN INLINE *@
+                                    <td>
+                                        <div class="mb-1">
+                                            <input class="form-control form-control-sm" @bind="personaEdicion.Nombres" placeholder="Nombres" />
+                                        </div>
+                                        <div>
+                                            <input class="form-control form-control-sm" @bind="personaEdicion.Apellidos" placeholder="Apellidos" />
+                                        </div>
+                                        <div class="mt-1"><span class="badge-tipo">@p.TipoPersona</span></div>
+                                    </td>
+                                    <td>
+                                        <input class="form-control form-control-sm" @bind="personaEdicion.DPI" placeholder="DPI" />
+                                    </td>
                                     <td>
                                         <div class="input-group input-group-sm mb-1">
                                             <span class="input-group-text"><i class="bi bi-telephone"></i></span>
@@ -314,6 +321,11 @@
                                 {
                                     @* REGISTRO EN MODO LECTURA NORMAL *@
                                     <td>
+                                        <div class="fw-bold fs-5 text-dark">@p.Nombres @p.Apellidos</div>
+                                        <div class="mt-1"><span class="badge-tipo">@p.TipoPersona</span></div>
+                                    </td>
+                                    <td><span class="badge-dpi">@p.DPI</span></td>
+                                    <td>
                                         <div class="small text-dark mb-1"><i class="bi bi-telephone-fill me-2 text-success"></i>@p.Telefono</div>
                                         <div class="small text-muted"><i class="bi bi-envelope-fill me-2 text-success"></i>@p.Gmail</div>
                                     </td>
@@ -323,7 +335,7 @@
                                             <button class="btn-hv btn-hv-edit btn-sm" @onclick="() => IniciarEdicion(p)">
                                                 <i class="bi bi-pencil-square"></i> Editar
                                             </button>
-                                            <button class="btn-hv btn-hv-delete btn-sm" @onclick="() => EliminarPersona(p.IdPersona)">
+                                            <button class="btn-hv btn-hv-delete btn-sm" @onclick="() => EliminarPersona(p)">
                                                 <i class="bi bi-trash3-fill"></i> Eliminar
                                             </button>
                                         </div>
@@ -359,8 +371,13 @@
     {
         if (await PersonaService.CrearPersonaAsync(nuevaPersona))
         {
+            await JS.InvokeVoidAsync("alert", "Registro guardado exitosamente.");
             nuevaPersona = new() { TipoPersona = "Cliente" };
             await CargarPersonas();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Error al intentar guardar el registro.");
         }
     }
 
@@ -369,6 +386,9 @@
         personaEdicion = new PersonaResponseDto 
         { 
             IdPersona = p.IdPersona,
+            Nombres = p.Nombres,
+            Apellidos = p.Apellidos,
+            DPI = p.DPI,
             Telefono = p.Telefono,
             Gmail = p.Gmail,
             Direccion = p.Direccion 
@@ -381,6 +401,9 @@
 
         var patchDto = new PersonaPatchDto 
         { 
+            Nombres = personaEdicion.Nombres,
+            Apellidos = personaEdicion.Apellidos,
+            DPI = personaEdicion.DPI,
             Telefono = personaEdicion.Telefono,
             Gmail = personaEdicion.Gmail,
             Direccion = personaEdicion.Direccion
@@ -390,8 +413,13 @@
         
         if (response)
         {
+            await JS.InvokeVoidAsync("alert", "Cambios actualizados correctamente.");
             personaEdicion = null;
             await CargarPersonas();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Error al intentar actualizar los datos.");
         }
     }
 
@@ -402,8 +430,19 @@
         return res.IsSuccessStatusCode;
     }
 
-    private async Task EliminarPersona(int id)
+    private async Task EliminarPersona(PersonaResponseDto p)
     {
-        if (await PersonaService.EliminarPersonaAsync(id)) await CargarPersonas();
+        bool confirmar = await JS.InvokeAsync<bool>("confirm", $"¿Esta seguro de que desea eliminar a " + p.Nombres + " " + p.Apellidos + "?");
+        if (!confirmar) return;
+
+        if (await PersonaService.EliminarPersonaAsync(p.IdPersona)) 
+        {
+            await JS.InvokeVoidAsync("alert", "Registro eliminado exitosamente.");
+            await CargarPersonas();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Error al intentar eliminar el registro.");
+        }
     }
 }
