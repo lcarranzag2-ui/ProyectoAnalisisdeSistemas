@@ -42,8 +42,8 @@ namespace HiddenValley.API.Data
             modelBuilder.Entity<EstadoCabana>().ToTable("estadocabana");
             modelBuilder.Entity<BitacoraEstados>().ToTable("bitacoraestados");
 
-            modelBuilder.Entity<Cabana>(entity =>
-            {
+
+            modelBuilder.Entity<Cabana>(entity => {
                 entity.Property(e => e.IdCabana).HasColumnName("idcabana");
                 entity.Property(e => e.IdTipoCabana).HasColumnName("idtipocabana");
                 entity.Property(e => e.IdEstadoCabana).HasColumnName("idestadocabana");
@@ -190,10 +190,6 @@ namespace HiddenValley.API.Data
                 .WithMany()
                 .HasForeignKey(e => e.IdPuestoTrabajo)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Empleado>()
-                .HasIndex(e => e.IdPersona)
-                .IsUnique();
         }
     }
 }
