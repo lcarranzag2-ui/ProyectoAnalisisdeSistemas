@@ -48,7 +48,8 @@ namespace HiddenValley.API.Data
             modelBuilder.Entity<BitacoraEstados>().ToTable("bitacoraestados");
 
 
-            modelBuilder.Entity<Cabana>(entity => {
+            modelBuilder.Entity<Cabana>(entity =>
+            {
                 entity.Property(e => e.IdCabana).HasColumnName("idcabana");
                 entity.Property(e => e.IdTipoCabana).HasColumnName("idtipocabana");
                 entity.Property(e => e.IdEstadoCabana).HasColumnName("idestadocabana");
@@ -171,6 +172,11 @@ namespace HiddenValley.API.Data
                 .WithMany(t => t.Servicios)
                 .HasForeignKey(s => s.IdTipoServicio)
                 .OnDelete(DeleteBehavior.Restrict);
+                
+            modelBuilder.Entity<Servicio>(entity =>
+            {
+                entity.Property(e => e.IdTipoServicio).HasColumnName("idtiposervicio");
+            });
 
             // ===== Módulo Reservación-Servicio (Detalle) =====
             modelBuilder.Entity<ReservacionServicio>().ToTable("reservacionservicio");
@@ -187,14 +193,14 @@ namespace HiddenValley.API.Data
 
                 // Relación con RegistroReservacion
                 entity.HasOne(d => d.Reservacion)
-                    .WithMany(p => p.ReservacionServicios) 
+                    .WithMany(p => p.ReservacionServicios)
                     .HasForeignKey(d => d.IdReservacion)
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("fk_reserva");
 
                 // Relación con Servicio
                 entity.HasOne(d => d.Servicio)
-                    .WithMany() 
+                    .WithMany()
                     .OnDelete(DeleteBehavior.Restrict)
                     .HasConstraintName("fk_servicio");
             });

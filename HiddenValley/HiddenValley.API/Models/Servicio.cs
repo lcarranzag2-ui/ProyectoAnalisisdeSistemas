@@ -22,7 +22,7 @@ namespace HiddenValley.API.Models
         [Column("precio")]
         public decimal Precio { get; set; }
 
-        // navegacion hacia el tipo de servicio
+        [ForeignKey("idtiposervicio")]
         public virtual TipoServicio? TipoServicio { get; set; }
     }
 }
