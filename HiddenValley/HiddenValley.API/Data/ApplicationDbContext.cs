@@ -35,6 +35,8 @@ namespace HiddenValley.API.Data
         public DbSet<PuestoTrabajo> PuestosTrabajo { get; set; }
         public DbSet<Empleado> Empleados { get; set; }
         public DbSet<ReservacionServicio> ReservacionServicios { get; set; }
+        public DbSet<EstadoCabana> EstadosCabanas { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

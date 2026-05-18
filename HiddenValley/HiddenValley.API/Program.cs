@@ -25,7 +25,6 @@ builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 builder.Services.AddScoped<IPersonaService, PersonaService>();
 builder.Services.AddScoped<ITipoCabanaService, TipoCabanaService>();
 builder.Services.AddScoped<IReservacionServicio, ReservacionServicioService>();
-builder.Services.AddScoped<IReservacionService, ReservacionService>();
 
 builder.Services.AddControllers();
 
