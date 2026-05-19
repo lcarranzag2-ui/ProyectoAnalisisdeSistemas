@@ -3,6 +3,8 @@
 @using HiddenValley.Frontend.Interfaces
 @using HiddenValley.Shared.DTOs
 @inject ICabanasService CabanaService
+@inject IJSRuntime jsRuntime
+@inject ICabanasService CabanaService
 
 <div class="container mt-4">
     
@@ -89,17 +91,18 @@
     {
         <div class="table-responsive shadow rounded-3 border">
             <table class="table table-hover align-middle bg-white mb-0">
-                <thead class="table-dark">
+                <thead style="background: #614035 !important; color: #ffffff !important; border-style: none;">
                     <tr>
-                        <th style="width: 70px;" class="ps-3">ID</th>
-                        <th style="width: 80px;" class="text-center">Vista</th>
-                        <th>Tipo de Cabaña</th>
-                        <th>Capacidad</th>
-                        <th>Precio Noche</th>
-                        <th>Estado Actual</th>
-                        <th class="text-center" style="width: 260px;">Acciones Administrativas</th>
-                    </tr>
-                </thead>
+                        <th style="width: 70px; background-color: #614035; color: #ffffff;" class="ps-3">ID</th>
+                        <th style="width: 80px; background-color: #614035; color: #ffffff;" class="text-center">Vista</th>
+                        <th style="background-color: #614035; color: #ffffff;">Tipo de Cabaña</th>
+                        <th style="background-color: #614035; color: #ffffff;">Capacidad</th>
+                        <th style="background-color: #614035; color: #ffffff;">Precio Noche</th>
+                        <th style="background-color: #614035; color: #ffffff;">Estado Actual</th>
+                        <th style="background-color: #614035; color: #ffffff; width: 260px;" class="text-center">Acciones
+                            Administrativas</th>
+                        </tr>
+                    </thead>
                 <tbody>
                     @foreach (var item in cabanasResponse.Items)
                     {
@@ -300,15 +303,16 @@
     }
 }
 
-    private async Task EliminarCabana(int id)
+    private async Task EliminarCabana(int idCabana)
     {
-        var resultado = await CabanaService.EliminarCabanaAsync(id);
-        
-        MostrarAlerta(resultado.Success, resultado.Message);
-        
-        if (resultado.Success)
+        if (await jsRuntime.InvokeAsync<bool>("confirm", $"¿Estás seguro de eliminar la cabaña #{idCabana}?"))
         {
-            await CargarCabanas();
+            var resultado = await CabanaService.EliminarCabanaAsync(idCabana);
+            MostrarAlerta(resultado.Success, resultado.Message);
+            if (resultado.Success)
+            {
+                await CargarCabanas();
+            }
         }
     }
 
