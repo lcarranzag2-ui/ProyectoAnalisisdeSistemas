@@ -1,0 +1,393 @@
+@page "/cabanas"
+@using System.Text.Json
+@using HiddenValley.Frontend.Interfaces
+@using HiddenValley.Shared.DTOs
+@inject ICabanasService CabanaService
+
+<div class="container mt-4">
+    
+    <div class="row align-items-center bg-light rounded shadow-sm p-4 mb-4 border-start border-4" style="border-color: #614035;">
+    <div class="col-md-7 col-12">
+        <h2 class="display-6 fw-bold text-dark mb-2">
+            <i class="bi bi-house-door" style="color: #614035;"></i> Gestión de Cabañas
+        </h2>
+    </div>
+    <div class="col-md-5 d-none d-md-block text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 140" width="100%" height="120">
+            <path d="M40,110 L110,40 L180,110 Z" fill="#e2e8f0" />
+            <path d="M130,110 L220,20 L310,110 Z" fill="#cbd5e1" />
+            
+            <rect x="10" y="105" width="380" height="8" rx="4" fill="#94a3b8" />
+            
+            <polygon points="50,105 35,75 65,75" fill="#1b5e20" opacity="0.85" />
+            <polygon points="50,80 38,55 62,55" fill="#004d40" opacity="0.85" />
+            
+            <polygon points="340,105 325,70 355,70" fill="#1b5e20" />
+            <polygon points="340,75 328,50 352,50" fill="#004d40" />
+            
+            <polygon points="365,105 355,80 375,80" fill="#212121" opacity="0.7" />
+
+            <rect x="190" y="70" width="80" height="35" fill="#5d4037" />
+            <rect x="220" y="80" width="16" height="25" fill="#261401" />
+            <circle cx="233" cy="93" r="1.5" fill="#bf8f00" />
+            
+            <rect x="250" y="77" width="14" height="14" fill="#fff8e1" rx="2" />
+            <line x1="257" y1="77" x2="257" y2="91" stroke="#261401" stroke-width="1" />
+            <line x1="250" y1="84" x2="264" y2="84" stroke="#261401" stroke-width="1" />
+            
+            <polygon points="180,70 230,30 280,70" fill="#a14101" />
+            <polygon points="185,70 230,34 275,70" fill="#862900" /> 
+            
+            <rect x="255" y="42" width="10" height="18" fill="#3e2723" />
+            <rect x="253" y="40" width="14" height="3" fill="#a14101" />
+            <path d="M260,32 Q265,25 260,18 T265,8" stroke="#e0e0e0" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6" />
+        </svg>
+    </div>
+</div>
+
+    @if (!string.IsNullOrEmpty(mensajeAlert))
+    {
+        <div class="alert alert-@tipoAlert alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi @(tipoAlert == "success" ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") me-2"></i>
+            @mensajeAlert
+            <button type="button" class="btn-close" @onclick="() => mensajeAlert = null"></button>
+        </div>
+    }
+
+    <div class="row mb-4 g-3 align-items-center">
+        <div class="col-md-6 col-12">
+            <div class="input-group shadow-sm">
+                <input type="text" class="form-control" placeholder="Buscar por tipo o estado..." 
+                       @bind="searchTerm" @onkeyup="PresionarEnterBuscar" />
+                <button class="btn btn-outline-primary" type="button" @onclick="EjecutarBuscarBtn">
+                    <i class="bi bi-search"></i> Buscar Cabañas
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6 col-12 text-md-end text-start">
+            <button class="btn btn-success btn-lg shadow-sm" @onclick="AbrirModalRegistro">
+                <i class="bi bi-plus-circle-fill me-2"></i> Registrar Nueva Cabaña
+            </button>
+        </div>
+    </div>
+
+    @if (cabanasResponse == null)
+    {
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando datos...</span>
+            </div>
+        </div>
+    }
+    else if (cabanasResponse.Items == null || !cabanasResponse.Items.Any())
+    {
+        <div class="alert alert-info text-center shadow-sm">
+            <i class="bi bi-info-circle me-2"></i> No se encontraron cabañas cargadas en el sistema.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive shadow rounded-3 border">
+            <table class="table table-hover align-middle bg-white mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 70px;" class="ps-3">ID</th>
+                        <th style="width: 80px;" class="text-center">Vista</th>
+                        <th>Tipo de Cabaña</th>
+                        <th>Capacidad</th>
+                        <th>Precio Noche</th>
+                        <th>Estado Actual</th>
+                        <th class="text-center" style="width: 260px;">Acciones Administrativas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in cabanasResponse.Items)
+                    {
+                        var jsonStr = JsonSerializer.Serialize(item);
+                        using var doc = JsonDocument.Parse(jsonStr);
+                        var cabana = doc.RootElement;
+
+                        var idCabana = cabana.GetProperty("idCabana").GetInt32();
+                        var tipoCabana = cabana.GetProperty("tipoCabana").GetString() ?? "Desconocido";
+                        var capacidad = cabana.GetProperty("capacidad").GetInt32();
+                        var precio = cabana.GetProperty("precio").GetDecimal();
+                        var estadoActual = cabana.GetProperty("estadoActual").GetString() ?? "Desconocido";
+
+                        <tr>
+                            <td class="ps-3"><strong>#@idCabana</strong></td>
+                            
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center rounded-3 p-1 border" 
+                                     style="width: 48px; height: 48px; background-color: @GetColorDeFondoMiniatura(estadoActual); border-color: @GetColorDeBordeMiniatura(estadoActual) !important;">
+                                    <svg viewBox="0 0 50 50" width="36" height="36">
+                                        <rect x="12" y="24" width="26" height="18" fill="@GetColorDibujoCabana(estadoActual)" rx="1" />
+                                        <rect x="17" y="30" width="7" height="12" fill="#fefec3" />
+                                        <rect x="28" y="28" width="6" height="6" fill="#fefec3" rx="1" />
+                                        <polygon points="8,24 25,8 42,24" fill="@GetColorDibujoTecho(estadoActual)" />
+                                        <rect x="31" y="12" width="4" height="6" fill="#4b5563" />
+                                    </svg>
+                                </div>
+                            </td>
+
+                            <td class="fw-bold text-dark">@tipoCabana</td>
+                            <td><span class="badge bg-light text-dark border">@capacidad personas</span></td>
+                            <td class="text-success fw-bold">@precio.ToString("C")</td>
+                            <td>
+                                <span class="badge px-3 py-2 rounded-pill @(GetBadgeClase(estadoActual))">
+                                    @estadoActual
+                                </span>
+                            </td>
+                            
+                            <td class="text-center">
+                                <div class="d-flex gap-2 justify-content-center align-items-center">
+                                    <div class="input-group input-group-sm" style="width: 160px;">
+                                        <span class="input-group-text bg-light text-secondary"><i class="bi bi-arrow-left-right"></i></span>
+                                        <select class="form-select form-select-sm fw-semibold" 
+                                                value="@estadoActual" 
+                                                @onchange="@(async (ChangeEventArgs e) => await OnEstadoSeleccionadoChanged(idCabana, e.Value?.ToString()))">
+                                            <option value="Disponible">Disponible</option>
+                                            <option value="Ocupada">Ocupada</option>
+                                            <option value="Mantenimiento">Mantenimiento</option>
+                                            <option value="Reservada">Reservada</option>
+                                        </select>
+                                    </div>
+
+                                    <button class="btn btn-sm btn-danger" title="Eliminar Cabaña"
+                                            @onclick="() => EliminarCabana(idCabana)">
+                                        <i class="bi bi-trash-fill">Eliminar</i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <nav class="d-flex justify-content-between align-items-center mt-4">
+            <span class="text-muted small">
+                Mostrando página <strong>@cabanasResponse.CurrentPage</strong> de <strong>@cabanasResponse.TotalPages</strong> (@cabanasResponse.TotalRecords registros totales)
+            </span>
+            <ul class="pagination pagination-sm mb-0 shadow-sm">
+                <li class="page-item @(cabanasResponse.CurrentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => CambiarPagina(cabanasResponse.CurrentPage - 1)">Anterior</button>
+                </li>
+                @for (int i = 1; i <= cabanasResponse.TotalPages; i++)
+                {
+                    var pagina = i;
+                    <li class="page-item @(cabanasResponse.CurrentPage == pagina ? "active" : "")">
+                        <button class="page-link" @onclick="() => CambiarPagina(pagina)">@pagina</button>
+                    </li>
+                }
+                <li class="page-item @(cabanasResponse.CurrentPage == cabanasResponse.TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => CambiarPagina(cabanasResponse.CurrentPage + 1)">Siguiente</button>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+@if (mostrarModalRegistro)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-house-add-fill me-2"></i> Nueva Cabaña en Sistema</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalRegistro"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <EditForm Model="@nuevoRegistro" OnValidSubmit="ProcesarRegistroCabana">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tipo de Estructura / Suite</label>
+                            <select class="form-select" @bind="nuevoRegistro.IdTipoCabana" required>
+                                <option value="0" disabled selected>-- Selecciona el tipo --</option>
+                                <option value="1">Suite Matrimonial</option>
+                                <option value="2">Cabaña Familiar</option>
+                                <option value="3">Bungalow Ejecutivo</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Estado de Apertura Inicial</label>
+                            <select class="form-select" @bind="nuevoRegistro.IdEstadoCabana" required>
+                                <option value="1">Disponible (ID: 1)</option>
+                                <option value="3">Mantenimiento (ID: 3)</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex gap-2 justify-content-end border-top pt-3">
+                            <button type="button" class="btn btn-secondary" @onclick="CerrarModalRegistro">Cancelar</button>
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="bi bi-save-fill me-1"></i> Guardar Cabaña
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private PagedResponse<object>? cabanasResponse;
+    private string? searchTerm = "";
+    private int paginaActual = 1;
+    private int tamañoPagina = 10;
+
+    private string? mensajeAlert;
+    private string tipoAlert = "success";
+
+    private bool mostrarModalRegistro = false;
+    private RegistrarCabanaRequest nuevoRegistro = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCabanas();
+    }
+
+    private async Task CargarCabanas()
+    {
+        cabanasResponse = await CabanaService.GetPagedAsync(searchTerm, paginaActual, tamañoPagina);
+    }
+
+    private async Task EjecutarBuscarBtn()
+    {
+        paginaActual = 1; 
+        await CargarCabanas();
+    }
+
+    private async Task PresionarEnterBuscar(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            paginaActual = 1;
+            await CargarCabanas();
+        }
+    }
+
+    private async Task CambiarPagina(int nuevaPagina)
+    {
+        if (nuevaPagina >= 1 && nuevaPagina <= (cabanasResponse?.TotalPages ?? 1))
+        {
+            paginaActual = nuevaPagina;
+            await CargarCabanas();
+        }
+    }
+
+    private async Task OnEstadoSeleccionadoChanged(int idCabana, string? nuevoEstado)
+    {
+        if (!string.IsNullOrEmpty(nuevoEstado))
+        {
+            await CambiarEstado(idCabana, nuevoEstado);
+        }
+    }
+
+    private async Task CambiarEstado(int idCabana, string nuevoEstado)
+{
+    var request = new CambiarEstadoRequest { IdCabana = idCabana, NuevoEstado = nuevoEstado };
+    var resultado = await CabanaService.CambiarEstadoAsync(request);
+    
+    if (resultado.Success)
+    {
+        mensajeAlert = null; 
+        await CargarCabanas();
+    }
+    else
+    {
+        MostrarAlerta(resultado.Success, resultado.Message ?? "No se pudo cambiar el estado.");
+    }
+}
+
+    private async Task EliminarCabana(int id)
+    {
+        var resultado = await CabanaService.EliminarCabanaAsync(id);
+        
+        MostrarAlerta(resultado.Success, resultado.Message);
+        
+        if (resultado.Success)
+        {
+            await CargarCabanas();
+        }
+    }
+
+    private void AbrirModalRegistro()
+    {
+        nuevoRegistro = new RegistrarCabanaRequest 
+        { 
+            IdTipoCabana = 0, 
+            IdEstadoCabana = 1 
+        };
+        mostrarModalRegistro = true;
+    }
+
+    private void CerrarModalRegistro() => mostrarModalRegistro = false;
+
+    private async Task ProcesarRegistroCabana()
+    {
+        if (nuevoRegistro.IdTipoCabana == 0)
+        {
+            MostrarAlerta(false, "Debes seleccionar un tipo de cabaña válido.");
+            return;
+        }
+
+        var resultado = await CabanaService.RegistrarCabanaAsync(nuevoRegistro);
+        
+        MostrarAlerta(resultado.Success, resultado.Message);
+        CerrarModalRegistro();
+        
+        if (resultado.Success)
+        {
+            await CargarCabanas();
+        }
+    }
+
+    private void MostrarAlerta(bool success, string mensaje)
+    {
+        mensajeAlert = mensaje;
+        tipoAlert = success ? "success" : "danger";
+    }
+
+    private string GetBadgeClase(string estado) => estado.ToLower() switch
+    {
+        "disponible" => "bg-success text-white",      
+        "ocupada" => "bg-danger text-white",         
+        "mantenimiento" => "bg-warning text-dark",   
+        "reservada" => "bg-info text-dark",          
+        _ => "bg-light text-dark"
+    };
+
+    private string GetColorDeFondoMiniatura(string estado) => estado.ToLower() switch
+    {
+        "disponible" => "#f0fdf4",
+        "ocupada" => "#fef2f2",
+        "mantenimiento" => "#fef3c7",
+        "reservada" => "#ecfeff",
+        _ => "#f8fafc"
+    };
+
+    private string GetColorDeBordeMiniatura(string estado) => estado.ToLower() switch
+    {
+        "disponible" => "#bbf7d0",
+        "ocupada" => "#fca5a5",
+        "mantenimiento" => "#fde68a",
+        "reservada" => "#cffafe",
+        _ => "#e2e8f0"
+    };
+
+    private string GetColorDibujoCabana(string estado) => estado.ToLower() switch
+    {
+        "disponible" => "#16a34a",
+        "ocupada" => "#dc2626",
+        "mantenimiento" => "#d97706",
+        "reservada" => "#0891b2",
+        _ => "#64748b"
+    };
+
+    private string GetColorDibujoTecho(string estado) => estado.ToLower() switch
+    {
+        "disponible" => "#991b1b",
+        _ => "#4b5563"
+    };
+}

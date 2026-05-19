@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using HiddenValley.Frontend;
 using HiddenValley.Frontend.Interfaces;
 using HiddenValley.Frontend.Services;
+using HiddenValley.Frontend.Service;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -16,5 +17,6 @@ builder.Services.AddScoped(sp => new HttpClient
 
 builder.Services.AddScoped<IPersonaClient, PersonaClient>();
 builder.Services.AddScoped<ITipoServicioClient, TipoServicioClient>();
+builder.Services.AddScoped<ICabanasService, CabanaService>();
 
 await builder.Build().RunAsync();
