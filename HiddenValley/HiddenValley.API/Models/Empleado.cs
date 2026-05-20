@@ -13,7 +13,7 @@ public class Empleado
 
     [Column("idpersona")]
     public int IdPersona { get; set; }
-
+    [Column("idpuestotrabajo")]
     public int IdPuestoTrabajo { get; set; }
 
     [ForeignKey(nameof(IdPersona))]
