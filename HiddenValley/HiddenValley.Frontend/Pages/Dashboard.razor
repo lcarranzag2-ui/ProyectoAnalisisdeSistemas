@@ -1,0 +1,162 @@
+@page "/dashboard"
+@using HiddenValley.Frontend.Interfaces
+@using HiddenValley.Shared.DTOs
+@inject IDashboardService DashboardSvc
+
+<PageTitle>Dashboard Operativo - Hidden Valley</PageTitle>
+
+<!-- encabezado igual al estilo del resto de paginas del proyecto -->
+<div class="row align-items-center bg-light rounded shadow-sm p-4 mb-4 border-start border-4" style="border-color: #614035;">
+    <div class="col">
+        <h2 class="display-6 fw-bold text-dark mb-0">
+            <i class="fas fa-chart-bar" style="color: #614035;"></i> Dashboard Operativo
+        </h2>
+        <p class="text-muted mb-0 small">Resumen de operaciones del dia — Hidden Valley</p>
+    </div>
+</div>
+
+@if (cargando)
+{
+    <div class="text-center p-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2 text-muted">Cargando informacion del dia...</p>
+    </div>
+}
+else if (resumen == null)
+{
+    <div class="alert alert-warning shadow-sm">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        No se pudo obtener la informacion del dashboard. Verifica que el servidor este en linea.
+    </div>
+}
+else
+{
+    <!-- tarjetas de metricas del dia -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:56px;height:56px;background-color:#e8f5e9;">
+                        <i class="fas fa-house" style="font-size:1.5rem;color:#2e7d32;"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Cabanas Disponibles</p>
+                        <h3 class="fw-bold mb-0">@resumen.CabanasDisponibles</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:56px;height:56px;background-color:#fbe9e7;">
+                        <i class="fas fa-door-closed" style="font-size:1.5rem;color:#bf360c;"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Cabanas Ocupadas Hoy</p>
+                        <h3 class="fw-bold mb-0">@resumen.CabanasOcupadasHoy</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:56px;height:56px;background-color:#e3f2fd;">
+                        <i class="fas fa-users" style="font-size:1.5rem;color:#1565c0;"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0 small">Personas Esperadas Hoy</p>
+                        <h3 class="fw-bold mb-0">@resumen.PersonasEsperadasHoy</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- tabla de proximas reservaciones -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0 fw-semibold">
+                <i class="fas fa-calendar-alt me-2" style="color:#614035;"></i> Proximas Reservaciones
+            </h5>
+        </div>
+        <div class="card-body p-0">
+
+            @if (resumen.ProximasReservas == null || !resumen.ProximasReservas.Any())
+            {
+                <div class="text-center p-4 text-muted">
+                    <i class="fas fa-calendar-times fa-2x mb-2 d-block"></i>
+                    No hay proximas reservaciones programadas.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th># Reserva</th>
+                                <th>Cliente</th>
+                                <th>Cabana</th>
+                                <th>Entrada</th>
+                                <th>Salida</th>
+                                <th>Personas</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var reserva in resumen.ProximasReservas)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">#@reserva.Id</td>
+                                    <td>@reserva.NombreCliente</td>
+                                    <td>@reserva.TipoCabana</td>
+                                    <td>@reserva.FechaEntrada.ToString("dd/MM/yyyy")</td>
+                                    <td>@reserva.FechaSalida.ToString("dd/MM/yyyy")</td>
+                                    <td>@reserva.CantidadPersonas</td>
+                                    <td>
+                                        <span class="badge @GetBadgeClass(reserva.EstadoReserva)">
+                                            @reserva.EstadoReserva
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+        </div>
+    </div>
+}
+
+@code {
+    private DashboardResumenDto? resumen;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // al cargar la pagina se consume el endpoint del backend
+        resumen = await DashboardSvc.GetResumenAsync();
+        cargando = false;
+    }
+
+    // asigna el color del badge segun el estado de la reserva
+    private string GetBadgeClass(string estado) => estado switch
+    {
+        "Confirmada" => "bg-success",
+        "Cancelada"  => "bg-danger",
+        "Pagada"     => "bg-primary",
+        _            => "bg-secondary"   // Recibida u otro
+    };
+}

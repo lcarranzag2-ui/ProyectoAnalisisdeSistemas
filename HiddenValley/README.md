@@ -192,12 +192,28 @@ Los archivos que conforman este modulo son:
 
 ---
 
+### Modulo Dashboard Frontend — PROYECT-91
+`GET /dashboard`
+
+Vista Blazor que consume el endpoint `GET /api/dashboard` del backend y muestra las metricas operativas del dia en tarjetas y una tabla de proximas reservaciones.
+
+Los archivos que conforman este modulo son:
+- `HiddenValley.Frontend/Interfaces/IDashboardService.cs`
+- `HiddenValley.Frontend/Service/DashboardService.cs`
+- `HiddenValley.Frontend/Pages/Dashboard.razor`
+
+> **Nota:** Al probar el modulo nos dimos cuenta que nginx por defecto no sabe manejar las rutas de Blazor WebAssembly. Cuando entrabas directamente a `/dashboard` en el navegador, nginx lo buscaba como un archivo fisico y devolvía un 404. Se corrigio agregando un `nginx.conf` con la directiva `try_files` para que cualquier ruta que no sea un archivo estatico redirija al `index.html` y Blazor pueda manejarla internamente. Tambien se actualizo el `Dockerfile` del frontend para que copie ese archivo de configuracion al contenedor.
+
+> **Nota 2:** Tambien se corrigio la URL base del `HttpClient` en `Program.cs` del frontend. Blazor WebAssembly corre en el navegador del usuario, no dentro de Docker, por eso no puede usar el nombre interno `api` de la red de Docker ni tampoco `localhost:5017` que es el puerto de desarrollo local. La URL correcta es `http://localhost:7084/` que es el puerto que `docker-compose.yml` expone al exterior para la API.
+
+---
+
 ## Autores
 - Jorge Danilo Ucelo
 - Christian Eduardo Lopez Lemus
 - Delmi Maria Fajardo
 - Keily Atalia Lopez Hernandez
 - Cristian Eduardo Chamo Morales
-- Ludin Eduardo Carranza Guerra (Módulo Reservaciones — PROYECT-60)
+- Ludin Eduardo Carranza Guerra 
 
 ESTUDIANTES DE INGENIERIA EN SISTEMAS DE LA UNIVERSIDAD MARIANO GALVEZ DE GUATEMALA SEDE EN JALAPA, JALAPA

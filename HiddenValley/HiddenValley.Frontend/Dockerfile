@@ -21,6 +21,10 @@ WORKDIR /usr/share/nginx/html
 
 COPY --from=publish /app/publish/wwwroot .
 
+# se agrego el nginx.conf para corregir el problema de rutas con Blazor WebAssembly
+# sin esto nginx devuelve 404 al acceder directamente a cualquier ruta que no sea /
+COPY HiddenValley.Frontend/nginx.conf /etc/nginx/nginx.conf
+
 EXPOSE 80
 
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
