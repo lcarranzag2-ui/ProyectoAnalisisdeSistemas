@@ -150,6 +150,48 @@ INSERT INTO Cliente (IdPersona) VALUES (2);
 
 ---
 
+### Modulo Dashboard — PROYECT-84
+`GET /api/dashboard`
+
+Retorna en una sola peticion todas las metricas operativas del dia:
+
+| Campo | Descripcion |
+|---|---|
+| `cabanasOcupadasHoy` | Cabanas con reserva activa entre hoy y manana |
+| `cabanasDisponibles` | Cabanas en estado "Disponible" que no estan ocupadas hoy |
+| `personasEsperadasHoy` | Suma de personas cuyo check-in es hoy |
+| `proximasReservas` | Lista de las proximas 5 reservas a partir de hoy, ordenadas cronologicamente |
+
+**Ejemplo GET `/api/dashboard`:**
+
+```json
+{
+  "cabanasOcupadasHoy": 3,
+  "cabanasDisponibles": 5,
+  "personasEsperadasHoy": 12,
+  "proximasReservas": [
+    {
+      "id": 7,
+      "nombreCliente": "Juan Perez",
+      "tipoCabana": "Familiar",
+      "fechaEntrada": "2026-05-22T00:00:00",
+      "fechaSalida": "2026-05-25T00:00:00",
+      "cantidadPersonas": 4,
+      "estadoReserva": "Confirmada"
+    }
+  ]
+}
+```
+
+Los archivos que conforman este modulo son:
+- `HiddenValley.Shared/DTOs/DashboardReservaDto.cs`
+- `HiddenValley.Shared/DTOs/DashboardResumenDto.cs`
+- `HiddenValley.API/Interfaces/IDashboardService.cs`
+- `HiddenValley.API/Services/DashboardService.cs`
+- `HiddenValley.API/Controllers/DashboardController.cs`
+
+---
+
 ## Autores
 - Jorge Danilo Ucelo
 - Christian Eduardo Lopez Lemus
