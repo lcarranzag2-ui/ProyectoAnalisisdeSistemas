@@ -17,6 +17,7 @@ builder.Services.AddScoped(sp => new HttpClient
 
 builder.Services.AddScoped<IPersonaClient, PersonaClient>();
 builder.Services.AddScoped<ITipoServicioClient, TipoServicioClient>();
+builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 builder.Services.AddScoped<ICabanasService, CabanaService>();
 
 await builder.Build().RunAsync();
