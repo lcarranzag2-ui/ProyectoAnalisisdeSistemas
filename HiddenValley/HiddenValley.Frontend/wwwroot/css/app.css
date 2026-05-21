@@ -112,3 +112,223 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+
+/* ═══════════════════════════════════════
+   HIDDEN VALLEY — Variables y estilos
+═══════════════════════════════════════ */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css');
+
+:root {
+    --hv-primary:      #2E7D32;
+    --hv-primary-dark: #1B5E20;
+    --hv-secondary:    #A5D6A7;
+    --hv-accent:       #FF8F00;
+    --hv-background:   #F9F6F0;
+    --hv-surface:      #FFFFFF;
+    --hv-text-muted:   #6B7280;
+    --hv-sidebar-w:    240px;
+}
+
+/* ── Layout ── */
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+    background: var(--hv-background);
+}
+
+/* ── Sidebar ── */
+.sidebar {
+    width: var(--hv-sidebar-w);
+    background: var(--hv-primary-dark);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 100;
+    transition: width 0.3s ease;
+}
+
+.menu-closed .sidebar {
+    width: 64px;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+}
+
+.sidebar-logo {
+    width: 40px;
+    border-radius: 8px;
+}
+
+.menu-closed .nav-label {
+    display: none;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-links li a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    color: #C8E6C9;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.nav-links li a:hover {
+    background: var(--hv-primary);
+    color: #fff;
+}
+
+.nav-links li a i {
+    font-size: 1.1rem;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* ── Botón hamburguesa ── */
+.hamburger-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 4px;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+}
+
+/* ── Área de contenido ── */
+.content-area {
+    margin-left: var(--hv-sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.3s ease;
+}
+
+.menu-closed .content-area {
+    margin-left: 64px;
+}
+
+.topbar {
+    background: var(--hv-surface);
+    padding: 1rem 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.topbar-title {
+    font-weight: 600;
+    color: var(--hv-primary-dark);
+}
+
+.mobile-only {
+    display: none;
+}
+
+.main-content {
+    padding: 2rem;
+}
+
+/* ── Pantalla de bienvenida ── */
+.welcome-wrapper {
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.welcome-hero {
+    text-align: center;
+    padding: 2rem 0 3rem;
+}
+
+.welcome-logo {
+    width: 100px;
+    margin-bottom: 1rem;
+}
+
+.welcome-title {
+    font-size: 2rem;
+    color: var(--hv-primary-dark);
+    margin: 0 0 0.5rem;
+}
+
+.welcome-subtitle {
+    color: var(--hv-text-muted);
+    font-size: 1.1rem;
+}
+
+/* ── Tarjetas de acceso rápido ── */
+.quick-access-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+}
+
+.quick-card {
+    background: var(--hv-surface);
+    border-radius: 16px;
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: #1A1A1A;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-top: 4px solid var(--hv-primary);
+}
+
+.quick-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.quick-card i {
+    font-size: 2rem;
+    color: var(--hv-primary);
+}
+
+.quick-card span {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {}
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .menu-open .sidebar {
+        transform: translateX(0);
+    }
+
+    .content-area {
+        margin-left: 0 !important;
+    }
+
+    .mobile-only {
+        display: block;
+    }
