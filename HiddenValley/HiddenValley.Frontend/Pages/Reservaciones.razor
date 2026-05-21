@@ -1,0 +1,419 @@
+@page "/reservaciones"
+@using HiddenValley.Frontend.Interfaces
+@using HiddenValley.Shared.DTOs
+@inject IReservacionService ReservacionSvc
+@inject IJSRuntime JS
+
+<!-- ── ENCABEZADO ─────────────────────────────────────────────────────────── -->
+<div class="row align-items-center bg-light rounded shadow-sm p-4 mb-4 border-start border-4" style="border-color:#614035;">
+    <div class="col">
+        <h2 class="display-6 fw-bold text-dark mb-0">
+            <i class="bi bi-calendar2-check" style="color:#614035;"></i> Panel de Reservaciones
+        </h2>
+        <p class="text-muted mb-0 small">Gestión del ciclo de vida de reservaciones — Hidden Valley</p>
+    </div>
+</div>
+
+<!-- ── ALERTA ─────────────────────────────────────────────────────────────── -->
+@if (!string.IsNullOrEmpty(_alerta))
+{
+    <div class="alert alert-@_alertaTipo alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi @(_alertaTipo == "success" ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") me-2"></i>
+        @_alerta
+        <button type="button" class="btn-close" @onclick="() => _alerta = null"></button>
+    </div>
+}
+
+<!-- ── BARRA DE BÚSQUEDA + BOTÓN NUEVO ───────────────────────────────────── -->
+<div class="row mb-3 g-2 align-items-center">
+    <div class="col-md-6">
+        <div class="input-group shadow-sm">
+            <input type="text" class="form-control" placeholder="Buscar por ID o nombre del cliente…"
+                   @bind="_search" @onkeyup="OnSearchKeyUp" />
+            <button class="btn btn-outline-primary" @onclick="BuscarAsync">
+                <i class="bi bi-search"></i> Buscar
+            </button>
+        </div>
+    </div>
+    <div class="col-md-6 text-md-end">
+        <button class="btn btn-success btn-lg shadow-sm" @onclick="AbrirModalCrear">
+            <i class="bi bi-plus-circle-fill me-1"></i> Nueva Reservación
+        </button>
+    </div>
+</div>
+
+<!-- ── TABLA ──────────────────────────────────────────────────────────────── -->
+@if (_paged == null)
+{
+    <div class="text-center p-5">
+        <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando…</span></div>
+    </div>
+}
+else if (!_paged.Items.Any())
+{
+    <div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>No se encontraron reservaciones.</div>
+}
+else
+{
+    <div class="table-responsive shadow rounded-3 border">
+        <table class="table table-hover align-middle bg-white mb-0">
+            <thead style="background:#614035;color:#fff;">
+                <tr>
+                    <th class="ps-3">ID</th>
+                    <th>Cliente</th>
+                    <th>Cabaña (Tipo)</th>
+                    <th>F. Entrada</th>
+                    <th>F. Salida</th>
+                    <th class="text-center">Personas</th>
+                    <th>Estado</th>
+                    <th class="text-end pe-3">Total</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in _paged.Items)
+                {
+                    <tr>
+                        <td class="ps-3 fw-bold">#@r.Id</td>
+                        <td>@r.NombreCliente</td>
+                        <td>@r.TipoCabana</td>
+                        <td>@r.FechaEntrada.ToString("dd/MM/yyyy")</td>
+                        <td>@r.FechaSalida.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center">@r.CantidadPersonas</td>
+                        <td><span class="badge rounded-pill @BadgeClase(r.EstadoReserva)">@r.EstadoReserva</span></td>
+                        <td class="text-end pe-3 fw-bold text-success">@r.TotalPagar.ToString("C")</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary" @onclick="() => AbrirModalEditar(r)">
+                                <i class="bi bi-pencil-fill"></i> Editar
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    <nav class="d-flex justify-content-between align-items-center mt-3">
+        <span class="text-muted small">
+            Página <strong>@_paged.CurrentPage</strong> de <strong>@_paged.TotalPages</strong>
+            (@_paged.TotalRecords registros)
+        </span>
+        <ul class="pagination pagination-sm mb-0 shadow-sm">
+            <li class="page-item @(_paged.CurrentPage == 1 ? "disabled" : "")">
+                <button class="page-link" @onclick="() => CambiarPagina(_paged.CurrentPage - 1)">Anterior</button>
+            </li>
+            @for (int p = 1; p <= _paged.TotalPages; p++)
+            {
+                var pg = p;
+                <li class="page-item @(_paged.CurrentPage == pg ? "active" : "")">
+                    <button class="page-link" @onclick="() => CambiarPagina(pg)">@pg</button>
+                </li>
+            }
+            <li class="page-item @(_paged.CurrentPage == _paged.TotalPages ? "disabled" : "")">
+                <button class="page-link" @onclick="() => CambiarPagina(_paged.CurrentPage + 1)">Siguiente</button>
+            </li>
+        </ul>
+    </nav>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MODAL — CREAR RESERVACIÓN
+     ══════════════════════════════════════════════════════════════════════════ -->
+@if (_mostrarCrear)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header text-white" style="background:#614035;">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-calendar-plus-fill me-2"></i>Nueva Reservación</h5>
+                    <button class="btn-close btn-close-white" @onclick="CerrarModalCrear"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <EditForm Model="_crear" OnValidSubmit="GuardarCrearAsync">
+                        <DataAnnotationsValidator />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">ID Cliente</label>
+                                <InputNumber class="form-control" @bind-Value="_crear.IdCliente" />
+                                <ValidationMessage For="() => _crear.IdCliente" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Teléfono del Cliente</label>
+                                <InputText class="form-control" @bind-Value="_crear.Telefono" placeholder="Ej: 50212345678" />
+                                <ValidationMessage For="() => _crear.Telefono" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">ID Cabaña</label>
+                                <InputNumber class="form-control" @bind-Value="_crear.IdCabana" />
+                                <ValidationMessage For="() => _crear.IdCabana" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Cantidad de Personas</label>
+                                <InputNumber class="form-control" @bind-Value="_crear.CantidadPersonas" />
+                                <ValidationMessage For="() => _crear.CantidadPersonas" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Fecha de Entrada</label>
+                                <InputDate class="form-control" @bind-Value="_crear.FechaEntrada" />
+                                <ValidationMessage For="() => _crear.FechaEntrada" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Fecha de Salida</label>
+                                <InputDate class="form-control" @bind-Value="_crear.FechaSalida" />
+                                <ValidationMessage For="() => _crear.FechaSalida" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">ID Empleado <span class="text-muted">(opcional)</span></label>
+                                <InputNumber class="form-control" @bind-Value="_crear.IdEmpleado" />
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(_modalError))
+                        {
+                            <div class="alert alert-danger mt-3 mb-0 py-2">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>@_modalError
+                            </div>
+                        }
+
+                        <div class="d-flex gap-2 justify-content-end border-top pt-3 mt-3">
+                            <button type="button" class="btn btn-secondary" @onclick="CerrarModalCrear">Cancelar</button>
+                            <button type="submit" class="btn btn-success px-4" disabled="@_guardando">
+                                @if (_guardando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                                <i class="bi bi-save-fill me-1"></i> Guardar
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MODAL — EDITAR RESERVACIÓN
+     ══════════════════════════════════════════════════════════════════════════ -->
+@if (_mostrarEditar && _editarDetalle != null)
+{
+    var esCancelada = _editarDetalle.EstadoReserva == "Cancelada";
+    var esPagada    = _editarDetalle.EstadoReserva == "Pagada";
+
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header text-white" style="background:#614035;">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-pencil-square me-2"></i>Editar Reservación #@_editarDetalle.Id
+                    </h5>
+                    <button class="btn-close btn-close-white" @onclick="CerrarModalEditar"></button>
+                </div>
+                <div class="modal-body p-4">
+
+                    @if (esCancelada)
+                    {
+                        <div class="alert alert-warning py-2">
+                            <i class="bi bi-lock-fill me-1"></i>
+                            Esta reservación está <strong>Cancelada</strong>. No se puede modificar.
+                        </div>
+                    }
+
+                    <EditForm Model="_patch" OnValidSubmit="GuardarPatchAsync">
+                        <DataAnnotationsValidator />
+                        <fieldset disabled="@esCancelada">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Fecha de Entrada</label>
+                                    <InputDate class="form-control" @bind-Value="_patchFechaEntrada" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Fecha de Salida</label>
+                                    <InputDate class="form-control" @bind-Value="_patchFechaSalida" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">ID Cabaña</label>
+                                    <InputNumber class="form-control" @bind-Value="_patchIdCabana" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Cantidad de Personas</label>
+                                    <InputNumber class="form-control" @bind-Value="_patchCantidad" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Teléfono</label>
+                                    <InputText class="form-control" @bind-Value="_patchTelefono" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Estado</label>
+                                    <select class="form-select" @bind="_patchEstado" disabled="@(esCancelada || esPagada)">
+                                        <option value="">— Sin cambio —</option>
+                                        <option value="Recibida">Recibida</option>
+                                        <option value="Confirmada">Confirmada</option>
+                                        <option value="Cancelada">Cancelada</option>
+                                        <option value="Pagada">Pagada</option>
+                                    </select>
+                                    @if (esPagada)
+                                    {
+                                        <small class="text-muted"><i class="bi bi-lock me-1"></i>Estado bloqueado (Pagada).</small>
+                                    }
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        @if (!string.IsNullOrEmpty(_modalError))
+                        {
+                            <div class="alert alert-danger mt-3 mb-0 py-2">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>@_modalError
+                            </div>
+                        }
+
+                        <div class="d-flex gap-2 justify-content-end border-top pt-3 mt-3">
+                            <button type="button" class="btn btn-secondary" @onclick="CerrarModalEditar">Cancelar</button>
+                            @if (!esCancelada)
+                            {
+                                <button type="submit" class="btn px-4 text-white" style="background:#614035;" disabled="@_guardando">
+                                    @if (_guardando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                                    <i class="bi bi-save-fill me-1"></i> Guardar Cambios
+                                </button>
+                            }
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // ── Estado general ────────────────────────────────────────────────────
+    private PagedResponse<ReservacionDetalleDto>? _paged;
+    private string? _search;
+    private int     _pagina    = 1;
+    private int     _pageSize  = 10;
+    private string? _alerta;
+    private string  _alertaTipo = "success";
+
+    // ── Modal Crear ───────────────────────────────────────────────────────
+    private bool               _mostrarCrear = false;
+    private ReservacionCreateDto _crear      = new();
+    private bool               _guardando    = false;
+    private string?            _modalError;
+
+    // ── Modal Editar ──────────────────────────────────────────────────────
+    private bool                  _mostrarEditar  = false;
+    private ReservacionDetalleDto? _editarDetalle;
+    private ReservacionPatchDto    _patch          = new();
+
+    // Campos auxiliares para el patch (nullable en el DTO pero InputDate/Number necesitan non-nullable)
+    private DateTime _patchFechaEntrada;
+    private DateTime _patchFechaSalida;
+    private int      _patchIdCabana;
+    private int      _patchCantidad;
+    private string?  _patchTelefono;
+    private string?  _patchEstado;
+
+    // ── Ciclo de vida ─────────────────────────────────────────────────────
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    // ── Carga / búsqueda / paginación ─────────────────────────────────────
+    private async Task CargarAsync()
+        => _paged = await ReservacionSvc.GetPagedAsync(_search, _pagina, _pageSize);
+
+    private async Task BuscarAsync() { _pagina = 1; await CargarAsync(); }
+
+    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    { if (e.Key == "Enter") await BuscarAsync(); }
+
+    private async Task CambiarPagina(int p)
+    {
+        if (p < 1 || p > (_paged?.TotalPages ?? 1)) return;
+        _pagina = p;
+        await CargarAsync();
+    }
+
+    // ── Modal Crear ───────────────────────────────────────────────────────
+    private void AbrirModalCrear()
+    {
+        _crear      = new ReservacionCreateDto { FechaEntrada = DateTime.Today, FechaSalida = DateTime.Today.AddDays(1) };
+        _modalError = null;
+        _mostrarCrear = true;
+    }
+
+    private void CerrarModalCrear() => _mostrarCrear = false;
+
+    private async Task GuardarCrearAsync()
+    {
+        _modalError = null;
+        _guardando  = true;
+        var res = await ReservacionSvc.CreateAsync(_crear);
+        _guardando  = false;
+
+        if (res.Success)
+        {
+            CerrarModalCrear();
+            Alerta(true, $"{res.Message} — ID: {res.Id} | Noches: {res.Noches} | Total: {res.Total:C}");
+            await CargarAsync();
+        }
+        else
+        {
+            _modalError = res.Message;
+        }
+    }
+
+    // ── Modal Editar ──────────────────────────────────────────────────────
+    private void AbrirModalEditar(ReservacionDetalleDto r)
+    {
+        _editarDetalle   = r;
+        _patchFechaEntrada = r.FechaEntrada;
+        _patchFechaSalida  = r.FechaSalida;
+        _patchIdCabana     = r.IdCabana;
+        _patchCantidad     = r.CantidadPersonas;
+        _patchTelefono     = r.TelefonoCliente;
+        _patchEstado       = null;
+        _modalError        = null;
+        _mostrarEditar     = true;
+    }
+
+    private void CerrarModalEditar() => _mostrarEditar = false;
+
+    private async Task GuardarPatchAsync()
+    {
+        if (_editarDetalle == null) return;
+        _modalError = null;
+        _guardando  = true;
+
+        var dto = new ReservacionPatchDto
+        {
+            FechaEntrada     = _patchFechaEntrada != _editarDetalle.FechaEntrada     ? _patchFechaEntrada : null,
+            FechaSalida      = _patchFechaSalida  != _editarDetalle.FechaSalida      ? _patchFechaSalida  : null,
+            IdCabana         = _patchIdCabana     != _editarDetalle.IdCabana         ? _patchIdCabana     : null,
+            CantidadPersonas = _patchCantidad     != _editarDetalle.CantidadPersonas ? _patchCantidad     : null,
+            Telefono         = _patchTelefono     != _editarDetalle.TelefonoCliente  ? _patchTelefono     : null,
+            EstadoReserva    = !string.IsNullOrEmpty(_patchEstado)                   ? _patchEstado       : null
+        };
+
+        var res = await ReservacionSvc.PatchAsync(_editarDetalle.Id, dto);
+        _guardando = false;
+
+        if (res.Success)
+        {
+            CerrarModalEditar();
+            Alerta(true, res.Message);
+            await CargarAsync();
+        }
+        else
+        {
+            _modalError = res.Message;
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+    private void Alerta(bool ok, string msg) { _alerta = msg; _alertaTipo = ok ? "success" : "danger"; }
+
+    private static string BadgeClase(string estado) => estado.ToLower() switch
+    {
+        "recibida"   => "bg-secondary text-white",
+        "confirmada" => "bg-primary text-white",
+        "cancelada"  => "bg-danger text-white",
+        "pagada"     => "bg-success text-white",
+        _            => "bg-light text-dark"
+    };
+}
