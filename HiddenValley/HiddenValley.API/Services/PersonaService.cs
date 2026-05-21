@@ -74,7 +74,9 @@ public class PersonaService(ApplicationDbContext context) : IPersonaService
     {
         var persona = await context.Personas.FindAsync(id);
         if (persona == null) return (false, "Persona no encontrada");
-
+        if (dto.Nombres != null) persona.Nombres = dto.Nombres;
+        if (dto.Apellidos != null) persona.Apellidos = dto.Apellidos;
+        if (dto.DPI != null) persona.DPI = dto.DPI;
         if (dto.Telefono != null) persona.Telefono = dto.Telefono;
         if (dto.Gmail != null) persona.Gmail = dto.Gmail;
         if (dto.Direccion != null) persona.Direccion = dto.Direccion;

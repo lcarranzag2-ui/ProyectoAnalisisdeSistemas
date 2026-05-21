@@ -52,5 +52,6 @@ namespace HiddenValley.API.Models
 
         [ForeignKey("IdCabana")]
         public virtual Cabana? Cabana { get; set; }
+        public virtual ICollection<ReservacionServicio> ReservacionServicios { get; set; } = new List<ReservacionServicio>();
     }
 }

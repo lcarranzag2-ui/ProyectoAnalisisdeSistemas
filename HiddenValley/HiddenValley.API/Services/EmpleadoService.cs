@@ -96,7 +96,9 @@ public class EmpleadoService(ApplicationDbContext context) : IEmpleadoService
         // Actualización parcial de datos de contacto (Persona)
         if (empleado.Persona != null)
         {
-            if (!string.IsNullOrWhiteSpace(dto.Gmail)) empleado.Persona.Gmail = dto.Gmail;
+            if (!string.IsNullOrWhiteSpace(dto.Nombres)) empleado.Persona.Nombres = dto.Nombres;
+            if (!string.IsNullOrWhiteSpace(dto.Apellidos)) empleado.Persona.Apellidos = dto.Apellidos;
+            if (!string.IsNullOrWhiteSpace(dto.Gmail)) empleado.Persona.Gmail = dto.Gmail;  
             if (!string.IsNullOrWhiteSpace(dto.Telefono)) empleado.Persona.Telefono = dto.Telefono;
         }
 
