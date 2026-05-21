@@ -97,6 +97,8 @@ public class ClienteService(ApplicationDbContext context) : IClienteService
 
         if (cliente?.Persona == null) return (false, "Cliente no encontrado");
 
+        if (!string.IsNullOrWhiteSpace(dto.Nombres)) cliente.Persona.Nombres = dto.Nombres;
+        if (!string.IsNullOrWhiteSpace(dto.Apellidos)) cliente.Persona.Apellidos = dto.Apellidos;
         if (!string.IsNullOrWhiteSpace(dto.Gmail)) cliente.Persona.Gmail = dto.Gmail;
         if (!string.IsNullOrWhiteSpace(dto.Telefono)) cliente.Persona.Telefono = dto.Telefono;
 
