@@ -1,79 +1,71 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using HiddenValley.Shared.DTOs;
-using HiddenValley.API.Interfaces;
 using HiddenValley.API.Data;
-using HiddenValley.API.Models; 
+using HiddenValley.API.Interfaces;
+using HiddenValley.Shared.DTOs;
 
-namespace HiddenValley.API.Services
+namespace HiddenValley.API.Controllers
 {
-    public class ServicioService : IServicioService
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ServiciosController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-
-        public ServicioService(ApplicationDbContext context)
+        private readonly IServicioService _servicioService;
+        private readonly ApplicationDbContext _context; 
+        public ServiciosController(IServicioService servicioService, ApplicationDbContext context)
         {
+            _servicioService = servicioService;
             _context = context;
         }
 
-        public async Task<IEnumerable<ServicioReadDto>> GetPagedAsync(int pageNumber, int pageSize, string? nombre, int? id)
+        [HttpGet]
+        public async Task<IActionResult> GetAll(
+            [FromQuery] int pageNumber = 1, 
+            [FromQuery] int pageSize = 10, 
+            [FromQuery] string? nombre = null, 
+            [FromQuery] int? id = null)
         {
-            var query = _context.Servicio!.AsQueryable();
+            var resultados = await _servicioService.GetPagedAsync(pageNumber, pageSize, nombre, id);
+            
+            var query = _context.Servicio.AsQueryable();
+            if (id.HasValue) query = query.Where(s => s.IdServicio == id.Value);
+            else if (!string.IsNullOrWhiteSpace(nombre)) query = query.Where(s => s.Nombre != null && s.Nombre.ToLower().Contains(nombre.ToLower()));
+            
+            int totalRecords = await query.CountAsync();
+            int totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
 
-            if (id.HasValue)
-                query = query.Where(s => s.IdServicio == id);
+            Response.Headers.Add("X-Total-Records", totalRecords.ToString());
+            Response.Headers.Add("X-Total-Pages", totalPages.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Records, X-Total-Pages"); // Permite que Blazor los lea
 
-            if (!string.IsNullOrEmpty(nombre))
-                query = query.Where(s => s.Nombre!.Contains(nombre));
-
-        return await query
-        .Skip((pageNumber - 1) * pageSize)
-        .Take(pageSize)
-        .Select(s => new ServicioReadDto {
-            IdServicio = s.IdServicio,
-            Nombre = s.Nombre,
-            Descripcion = s.Descripcion,
-            Precio = s.Precio
-        })
-        .ToListAsync();
+            return Ok(resultados);
         }
 
-        public async Task<ServicioCreateDto> CreateServicioAsync(ServicioCreateDto servicioDto)
+        [HttpPost]
+        public async Task<ActionResult<ServicioCreateDto>> Create(ServicioCreateDto servicioDto)
         {
-            var nuevoServicio = new Servicio {
-                Nombre = servicioDto.Nombre,
-                Descripcion = servicioDto.Descripcion,
-                Precio = servicioDto.Precio
-            };
-
-            _context.Servicio.Add(nuevoServicio);
-            await _context.SaveChangesAsync();
-
-            return new ServicioCreateDto {
-                Nombre = nuevoServicio.Nombre,
-                Descripcion = nuevoServicio.Descripcion,
-                Precio = nuevoServicio.Precio
-            };
+            var creado = await _servicioService.CreateServicioAsync(servicioDto);
+            return Ok(creado);
         }
 
-        public async Task<bool> PatchAsync(int id, UpdateServicioDto patchData)
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Patch(int id, [FromBody] UpdateServicioDto servicioDto)
         {
-            var existente = await _context.Servicio!.FindAsync(id);
-            if (existente == null) return false;
-            if (patchData.Nombre != null) existente.Nombre = patchData.Nombre;
-            if (patchData.Descripcion != null) existente.Descripcion = patchData.Descripcion;
-            if (patchData.Precio != 0) existente.Precio = patchData.Precio;
-
-            await _context.SaveChangesAsync();
-            return true;
+            var actualizado = await _servicioService.PatchAsync(id, servicioDto);
+            if (!actualizado) return NotFound();
+            return NoContent();
         }
 
-        public async Task<bool> DeleteServicioAsync(int id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            var servicio = await _context.Servicio.FindAsync(id);
-            if (servicio == null) return false;
-
-            _context.Servicio.Remove(servicio);
-            return await _context.SaveChangesAsync() > 0;
+            var resultado = await _servicioService.DeleteServicioAsync(id);
+            if (!resultado) return NotFound();
+            return NoContent();
         }
     }
 }

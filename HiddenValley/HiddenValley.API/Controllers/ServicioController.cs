@@ -2,57 +2,84 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using HiddenValley.Shared.DTOs;
+using Microsoft.EntityFrameworkCore;
+using HiddenValley.API.Data;
 using HiddenValley.API.Interfaces;
+using HiddenValley.API.Models;
+using HiddenValley.Shared.DTOs;
 
-namespace HiddenValley.API.Controllers
+namespace HiddenValley.API.Services
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ServiciosController : ControllerBase
+    public class ServicioService : IServicioService
     {
-        private readonly IServicioService _servicioService;
+        private readonly ApplicationDbContext _context;
 
-        public ServiciosController(IServicioService servicioService)
+        public ServicioService(ApplicationDbContext context)
         {
-            _servicioService = servicioService;
+            _context = context;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll(
-            [FromQuery] int pageNumber = 1, 
-            [FromQuery] int pageSize = 10, 
-            [FromQuery] string? nombre = null, 
-            [FromQuery] int? id = null)
+        public async Task<IEnumerable<ServicioReadDto>> GetPagedAsync(int pageNumber, int pageSize, string? nombre, int? id)
         {
-            var resultados = await _servicioService.GetPagedAsync(pageNumber, pageSize, nombre, id);
-            return Ok(resultados);
+            var query = _context.Servicio.AsQueryable();
+
+            if (id.HasValue)
+            {
+                query = query.Where(s => s.IdServicio == id.Value);
+            }
+            else if (!string.IsNullOrWhiteSpace(nombre))
+            {
+                query = query.Where(s => s.Nombre != null && s.Nombre.ToLower().Contains(nombre.ToLower()));
+            }
+
+            var itemsDb = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return itemsDb.Select(s => new ServicioReadDto
+            {
+                IdServicio = s.IdServicio,
+                Nombre = s.Nombre ?? string.Empty,
+                Descripcion = s.Descripcion ?? string.Empty,
+                Precio = s.Precio
+            }).ToList();
         }
 
-
-        [HttpPost]
-        public async Task<ActionResult<ServicioCreateDto>> Create(ServicioCreateDto servicioDto)
+        public async Task<ServicioCreateDto> CreateServicioAsync(ServicioCreateDto servicioDto)
         {
-            var creado = await _servicioService.CreateServicioAsync(servicioDto);
-            return Ok(creado);
+            var nuevoServicio = new Servicio
+            {
+                Nombre = servicioDto.Nombre,
+                Descripcion = servicioDto.Descripcion,
+                Precio = servicioDto.Precio
+            };
+            _context.Servicio.Add(nuevoServicio);
+            await _context.SaveChangesAsync();
+            return servicioDto;
         }
 
-        [HttpPatch("{id}")]
-        public async Task<IActionResult> Patch(int id, [FromBody] UpdateServicioDto servicioDto)
+        public async Task<bool> PatchAsync(int id, UpdateServicioDto patchData)
         {
-            var actualizado = await _servicioService.PatchAsync(id, servicioDto);
-            if (!actualizado) return NotFound();
+            var servicio = await _context.Servicio.FindAsync(id);
+            if (servicio == null) return false;
 
-            return NoContent();
+            if (patchData.Nombre != null) servicio.Nombre = patchData.Nombre;
+            if (patchData.Descripcion != null) servicio.Descripcion = patchData.Descripcion;
+            if (patchData.Precio > 0) servicio.Precio = patchData.Precio;
+
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<bool> DeleteServicioAsync(int id)
         {
-            var resultado = await _servicioService.DeleteServicioAsync(id);
-            if (!resultado) return NotFound();
-            return NoContent();
+            var servicio = await _context.Servicio.FindAsync(id);
+            if (servicio == null) return false;
+
+            _context.Servicio.Remove(servicio);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
