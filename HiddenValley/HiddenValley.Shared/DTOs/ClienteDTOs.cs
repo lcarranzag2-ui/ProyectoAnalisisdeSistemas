@@ -9,6 +9,8 @@ public class ClienteCreateDTO
 
 public class ClientePatchDTO
 {
+    public string? Nombres { get; set; }
+    public string? Apellidos { get; set; }
     public string? Gmail { get; set; }
     public string? Telefono { get; set; }
 }

@@ -17,6 +17,7 @@ builder.Services.AddScoped(sp => new HttpClient
     BaseAddress = new Uri("http://localhost:5017/") 
 });
 
+builder.Services.AddScoped<IClienteClient, ClienteClient>();
 builder.Services.AddScoped<IPersonaClient, PersonaClient>();
 builder.Services.AddScoped<ITipoServicioClient, TipoServicioClient>();
 builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
