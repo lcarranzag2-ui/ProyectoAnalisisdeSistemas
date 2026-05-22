@@ -1,0 +1,366 @@
+@page "/reservacion-servicios"
+@using HiddenValley.Frontend.Interfaces
+@using HiddenValley.Shared.DTOs
+@inject IReservacionServicioService ResServicioService
+@inject IJSRuntime js
+
+<div class="container mt-4">
+    
+    <div class="row align-items-center bg-light rounded shadow-sm p-4 mb-4 border-start border-4" style="border-color: #614035;">
+        <div class="col-12">
+            <h2 class="display-6 fw-bold text-dark mb-2">
+                <i class="bi bi-bell-fill" style="color: #614035;"></i> Servicios por Reservación
+            </h2>
+            <p class="text-muted mb-0">Administración y asignación de consumos o servicios extra vinculados a las estadías.</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(mensajeAlert))
+    {
+        <div class="alert alert-@tipoAlert alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi @(tipoAlert == "success" ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") me-2"></i>
+            @mensajeAlert
+            <button type="button" class="btn-close" @onclick="() => mensajeAlert = null"></button>
+        </div>
+    }
+
+    <div class="row mb-4 g-3 align-items-center">
+        <div class="col-md-5 col-12">
+            <div class="input-group shadow-sm">
+                <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                <input type="text" class="form-control" placeholder="Buscar por cliente..." 
+                       @bind="buscarCliente" @onkeyup="PresionarEnterBuscar" />
+            </div>
+        </div>
+        <div class="col-md-4 col-12">
+            <div class="input-group shadow-sm">
+                <span class="input-group-text bg-white"><i class="bi bi-calendar-event"></i></span>
+                <input type="date" class="form-control" @bind="buscarFecha" />
+            </div>
+        </div>
+        <div class="col-md-3 col-12 d-flex gap-2">
+            <button class="btn btn-outline-secondary w-100" type="button" @onclick="LimpiarFiltros">
+                Limpiar
+            </button>
+            <button class="btn btn-primary w-100" type="button" @onclick="EjecutarBuscarBtn">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12 text-end">
+            <button class="btn btn-success btn-lg shadow-sm" @onclick="AbrirModalRegistro">
+                <i class="bi bi-plus-circle-fill me-2"></i> Asignar Servicio a Reserva
+            </button>
+        </div>
+    </div>
+
+    @if (pagedResponse == null)
+    {
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando registros...</span>
+            </div>
+        </div>
+    }
+    else if (pagedResponse.Items == null || !pagedResponse.Items.Any())
+    {
+        <div class="alert alert-info text-center shadow-sm">
+            <i class="bi bi-info-circle me-2"></i> No se encontraron servicios asignados bajo estos criterios.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive shadow rounded-3 border">
+            <table class="table table-hover align-middle bg-white mb-0">
+                <thead style="background: #614035 !important; color: #ffffff !important;">
+                    <tr>
+                        <th style="width: 110px; background-color: #614035; color: #ffffff;" class="ps-3">Reserva #</th>
+                        <th style="background-color: #614035; color: #ffffff;">Cliente</th>
+                        <th style="background-color: #614035; color: #ffffff;">Fecha Entrada</th>
+                        <th style="background-color: #614035; color: #ffffff;" class="text-center">Estado</th>
+                        <th style="background-color: #614035; color: #ffffff;" class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var reserva in pagedResponse.Items)
+                    {
+                        <tr>
+                            <td class="ps-3"><strong>#@reserva.IdReservacion</strong></td>
+                            <td class="fw-bold text-dark">@reserva.NombreCliente</td>
+                            <td>@reserva.FechaEntrada.ToString("dd/MM/yyyy")</td>
+                            <td class="text-center">
+                                <span class="badge px-2 py-1 rounded-pill bg-secondary text-white">
+                                    @reserva.EstadoReserva
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm"
+                                        @onclick="() => AbrirModalDetalle(reserva)">
+                                    <i class="bi bi-eye-fill me-1"></i> Ver Detalle
+                                    <span class="badge bg-primary ms-1 text-white">@(reserva.Servicios?.Count ?? 0)</span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <nav class="d-flex justify-content-between align-items-center mt-4">
+            <span class="text-muted small">
+                Mostrando página <strong>@pagedResponse.PaginaActual</strong> de <strong>@pagedResponse.TotalPaginas</strong> (@pagedResponse.TotalRegistros registros)
+            </span>
+            <ul class="pagination pagination-sm mb-0 shadow-sm">
+                <li class="page-item @(pagedResponse.PaginaActual == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => CambiarPagina(pagedResponse.PaginaActual - 1)">Anterior</button>
+                </li>
+                @for (int i = 1; i <= pagedResponse.TotalPaginas; i++)
+                {
+                    var pagina = i;
+                    <li class="page-item @(pagedResponse.PaginaActual == pagina ? "active" : "")">
+                        <button class="page-link" @onclick="() => CambiarPagina(pagina)">@pagina</button>
+                    </li>
+                }
+                <li class="page-item @(pagedResponse.PaginaActual == pagedResponse.TotalPaginas ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => CambiarPagina(pagedResponse.PaginaActual + 1)">Siguiente</button>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+@if (mostrarModalRegistro)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-journal-plus me-2"></i> Asignar Servicio Extra</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalRegistro"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <EditForm Model="@nuevoRegistro" OnValidSubmit="ProcesarAsignacion">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">ID de la Reservación</label>
+                            <input type="number" class="form-control" @bind-value="nuevoRegistro.IdReservacion" min="1" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Código del Servicio (ID)</label>
+                            <input type="number" class="form-control" @bind-value="nuevoRegistro.IdServicio" min="1" required />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Cantidad / Unidades</label>
+                            <input type="number" class="form-control" @bind-value="nuevoRegistro.Cantidad" min="1" required />
+                        </div>
+
+                        <div class="d-flex gap-2 justify-content-end border-top pt-3">
+                            <button type="button" class="btn btn-secondary" @onclick="CerrarModalRegistro">Cancelar</button>
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="bi bi-save-fill me-1"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (mostrarModalDetalle && reservaSeleccionada != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header text-white" style="background-color: #614035;">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-info-circle-fill me-2"></i> Detalle de Consumos: Reserva #@reservaSeleccionada.IdReservacion
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalDetalle"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row mb-3 pb-3 border-bottom text-dark">
+                        <div class="col-sm-6 col-12">
+                            <p class="mb-1 text-muted small uppercase fw-bold">Titular de la Reserva</p>
+                            <p class="fw-bold fs-5 text-primary mb-0">@reservaSeleccionada.NombreCliente</p>
+                        </div>
+                        <div class="col-sm-6 col-12 text-sm-end text-start mt-2 mt-sm-0">
+                            <p class="mb-1 text-muted small uppercase fw-bold">Fecha de Registro</p>
+                            <p class="fw-bold mb-0"><i class="bi bi-calendar3 me-1"></i> @reservaSeleccionada.FechaEntrada.ToString("dd/MM/yyyy")</p>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-tags-fill me-1"></i> Lista de Servicios Adicionales</h6>
+                    
+                    @if (reservaSeleccionada.Servicios == null || !reservaSeleccionada.Servicios.Any())
+                    {
+                        <div class="alert alert-light text-center border py-4 my-2">
+                            <i class="bi bi-dash-circle text-muted fs-4 d-block mb-2"></i>
+                            <span class="text-muted italic">Esta reservación no cuenta con servicios extra asignados actualmente.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group shadow-sm">
+                            @foreach (var serv in reservaSeleccionada.Servicios)
+                            {
+                                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3">
+                                    <div>
+                                        <span class="fw-bold text-dark fs-5 d-block">
+                                            @serv.NombreServicio <span class="text-muted fs-6 fw-normal">x@serv.Quantity</span>
+                                        </span>
+                                        <small class="text-muted font-monospace">Código de servicio: #@serv.IdServicio</small>
+                                    </div>
+                                    <button type="button" class="btn btn-danger btn-sm px-3 shadow-sm rounded-3" 
+                                            title="Remover Servicio"
+                                            @onclick="() => EliminarAsignacionDesdeModal(reservaSeleccionada.IdReservacion, serv.IdServicio)">
+                                        <i class="bi bi-trash3-fill me-1"></i> Eliminar
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer bg-light border-top">
+                    <button type="button" class="btn btn-secondary px-4 rounded-pill shadow-sm" @onclick="CerrarModalDetalle">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private PagedResultReservacionServicio<ReservacionServicioReadDto>? pagedResponse;
+    private string? buscarCliente = "";
+    private DateTime? buscarFecha;
+    private int paginaActual = 1;
+    private int registrosPorPagina = 10;
+
+    private string? mensajeAlert;
+    private string tipoAlert = "success";
+
+    private bool mostrarModalRegistro = false;
+    private ReservacionServicioCreateDto nuevoRegistro = new();
+
+    private bool mostrarModalDetalle = false;
+    private ReservacionServicioReadDto? reservaSeleccionada;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        pagedResponse = await ResServicioService.GetPagedAsync(paginaActual, registrosPorPagina, buscarCliente, null, buscarFecha);
+        
+        if (mostrarModalDetalle && reservaSeleccionada != null && pagedResponse?.Items != null)
+        {
+            reservaSeleccionada = pagedResponse.Items.FirstOrDefault(x => x.IdReservacion == reservaSeleccionada.IdReservacion);
+        }
+    }
+
+    private async Task EjecutarBuscarBtn()
+    {
+        paginaActual = 1;
+        await CargarDatos();
+    }
+
+    private async Task PresionarEnterBuscar(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            paginaActual = 1;
+            await CargarDatos();
+        }
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        buscarCliente = string.Empty;
+        buscarFecha = null;
+        paginaActual = 1;
+        await CargarDatos();
+    }
+
+    private async Task CambiarPagina(int nuevaPagina)
+    {
+        if (pagedResponse != null && nuevaPagina >= 1 && nuevaPagina <= pagedResponse.TotalPaginas)
+        {
+            paginaActual = nuevaPagina;
+            await CargarDatos();
+        }
+    }
+
+    private void AbrirModalRegistro()
+    {
+        nuevoRegistro = new ReservacionServicioCreateDto { Cantidad = 1 };
+        mostrarModalRegistro = true;
+    }
+
+    private void CerrarModalRegistro() => mostrarModalRegistro = false;
+
+    private void AbrirModalDetalle(ReservacionServicioReadDto reserva)
+    {
+        reservaSeleccionada = reserva;
+        mostrarModalDetalle = true;
+    }
+
+    private void CerrarModalDetalle()
+    {
+        reservaSeleccionada = null;
+        mostrarModalDetalle = false;
+    }
+
+    private async Task ProcesarAsignacion()
+    {
+        if (nuevoRegistro.IdReservacion <= 0 || nuevoRegistro.IdServicio <= 0 || nuevoRegistro.Cantidad <= 0)
+        {
+            MostrarAlerta(false, "Por favor complete todos los campos con valores mayores a cero.");
+            return;
+        }
+
+        bool exito = await ResServicioService.CreateAsync(nuevoRegistro);
+        CerrarModalRegistro();
+
+        if (exito)
+        {
+            MostrarAlerta(true, "Servicio asignado o acumulado correctamente en la reservación.");
+            await CargarDatos();
+        }
+        else
+        {
+            MostrarAlerta(false, "Hubo un problema al procesar la asignación en la base de datos.");
+        }
+    }
+
+    private async Task EliminarAsignacionDesdeModal(int idRes, int idSer)
+    {
+        bool confirmado = await js.InvokeAsync<bool>("confirm", $"¿Está seguro que desea remover el servicio #{idSer} de la reservación #{idRes}?");
+        
+        if (confirmado)
+        {
+            bool exito = await ResServicioService.DeleteAsync(idRes, idSer);
+            if (exito)
+            {
+                MostrarAlerta(true, "El servicio seleccionado fue removido satisfactoriamente de la reservación.");
+                await CargarDatos(); 
+            }
+            else
+            {
+                MostrarAlerta(false, "No se pudo eliminar el registro seleccionado.");
+            }
+        }
+    }
+
+    private void MostrarAlerta(bool success, string mensaje)
+    {
+        mensajeAlert = mensaje;
+        tipoAlert = success ? "success" : "danger";
+    }
+}

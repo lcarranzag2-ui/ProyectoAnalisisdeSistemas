@@ -21,6 +21,7 @@ public class ReservacionService(ApplicationDbContext context) : IReservacionServ
         var query = context.RegistroReservacion
             .Include(r => r.Cliente)!.ThenInclude(c => c!.Persona)
             .Include(r => r.Cabana)!.ThenInclude(c => c!.TipoCabana)
+            .Include(r => r.ReservacionServicios)!.ThenInclude(rs => rs.Servicio)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -60,6 +61,7 @@ public class ReservacionService(ApplicationDbContext context) : IReservacionServ
         var reserva = await context.RegistroReservacion
             .Include(r => r.Cliente)!.ThenInclude(c => c!.Persona)
             .Include(r => r.Cabana)!.ThenInclude(c => c!.TipoCabana)
+            .Include(r => r.ReservacionServicios)!.ThenInclude(rs => rs.Servicio)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         return reserva is null ? null : MapearADetalle(reserva);
@@ -107,7 +109,7 @@ public class ReservacionService(ApplicationDbContext context) : IReservacionServ
             return (false, "La cabaña ya tiene una reserva en esas fechas.", null, null, null);
 
         var noches = Math.Max(1, (dto.FechaSalida.Date - dto.FechaEntrada.Date).Days);
-        var total  = noches * cabana.TipoCabana.Precio;
+        var total  = noches * cabana.TipoCabana.Precio; 
 
         var nueva = new RegistroReservacion
         {
@@ -132,6 +134,7 @@ public class ReservacionService(ApplicationDbContext context) : IReservacionServ
         var reserva = await context.RegistroReservacion
             .Include(r => r.Cliente)!.ThenInclude(c => c!.Persona)
             .Include(r => r.Cabana)!.ThenInclude(c => c!.TipoCabana)
+            .Include(r => r.ReservacionServicios)!.ThenInclude(rs => rs.Servicio) 
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (reserva is null)
@@ -140,7 +143,6 @@ public class ReservacionService(ApplicationDbContext context) : IReservacionServ
         if (reserva.EstadoReserva == EstadoCancelada)
             return (false, "No se puede actualizar una reservación cancelada.", null);
 
-        // Cambio de estado
         if (dto.EstadoReserva != null)
         {
             if (!EstadosValidos.Contains(dto.EstadoReserva))
@@ -152,7 +154,6 @@ public class ReservacionService(ApplicationDbContext context) : IReservacionServ
             reserva.EstadoReserva = dto.EstadoReserva;
         }
 
-        // Actualización de campos de datos
         var nuevaFechaEntrada = dto.FechaEntrada ?? reserva.FechaEntrada;
         var nuevaFechaSalida  = dto.FechaSalida  ?? reserva.FechaSalida;
         var nuevaCantidad     = dto.CantidadPersonas ?? reserva.CantidadPersonas;
@@ -194,9 +195,13 @@ public class ReservacionService(ApplicationDbContext context) : IReservacionServ
         reserva.FechaSalida      = nuevaFechaSalida.Date;
         reserva.CantidadPersonas = nuevaCantidad;
         reserva.IdCabana         = nuevaIdCabana;
-
         var noches = Math.Max(1, (reserva.FechaSalida.Date - reserva.FechaEntrada.Date).Days);
-        reserva.TotalPagar = noches * cabanaDestino.TipoCabana.Precio;
+        decimal costoCabana = noches * cabanaDestino.TipoCabana.Precio;
+        
+        decimal costoServiciosExtra = reserva.ReservacionServicios?
+            .Sum(rs => rs.Cantidad * (rs.Servicio?.Precio ?? 0)) ?? 0;
+
+        reserva.TotalPagar = costoCabana + costoServiciosExtra;
 
         await context.SaveChangesAsync();
 
@@ -217,22 +222,33 @@ public class ReservacionService(ApplicationDbContext context) : IReservacionServ
         return null;
     }
 
-    private static ReservacionDetalleDto MapearADetalle(RegistroReservacion r) => new()
+    private static ReservacionDetalleDto MapearADetalle(RegistroReservacion r)
     {
-        Id               = r.Id,
-        FechaEntrada     = r.FechaEntrada,
-        FechaSalida      = r.FechaSalida,
-        CantidadPersonas = r.CantidadPersonas,
-        EstadoReserva    = r.EstadoReserva,
-        TotalPagar       = r.TotalPagar,
-        IdCliente        = r.IdCliente,
-        NombreCliente    = r.Cliente?.Persona != null
-            ? r.Cliente.Persona.Nombres + " " + r.Cliente.Persona.Apellidos
-            : "Desconocido",
-        TelefonoCliente  = r.Cliente?.Persona?.Telefono ?? string.Empty,
-        IdCabana         = r.IdCabana,
-        TipoCabana       = r.Cabana?.TipoCabana?.Nombre ?? "Desconocido",
-        CapacidadCabana  = r.Cabana?.TipoCabana?.Capacidad ?? 0,
-        IdEmpleado       = r.IdEmpleado
-    };
+        var noches = Math.Max(1, (r.FechaSalida.Date - r.FechaEntrada.Date).Days);
+        decimal precioCabana = r.Cabana?.TipoCabana?.Precio ?? 0;
+        decimal subtotalCabana = noches * precioCabana;
+
+        decimal subtotalServicios = r.ReservacionServicios?
+            .Sum(rs => rs.Cantidad * (rs.Servicio?.Precio ?? 0)) ?? 0;
+
+        return new ReservacionDetalleDto
+        {
+            Id               = r.Id,
+            FechaEntrada     = r.FechaEntrada,
+            FechaSalida      = r.FechaSalida,
+            CantidadPersonas = r.CantidadPersonas,
+            EstadoReserva    = r.EstadoReserva,
+            // Aquí enviamos la suma real calculada
+            TotalPagar       = subtotalCabana + subtotalServicios, 
+            IdCliente        = r.IdCliente,
+            NombreCliente    = r.Cliente?.Persona != null
+                ? r.Cliente.Persona.Nombres + " " + r.Cliente.Persona.Apellidos
+                : "Desconocido",
+            TelefonoCliente  = r.Cliente?.Persona?.Telefono ?? string.Empty,
+            IdCabana         = r.IdCabana,
+            TipoCabana       = r.Cabana?.TipoCabana?.Nombre ?? "Desconocido",
+            CapacidadCabana  = r.Cabana?.TipoCabana?.Capacidad ?? 0,
+            IdEmpleado       = r.IdEmpleado
+        };
+    }
 }

@@ -18,44 +18,56 @@ namespace HiddenValley.API.Services
             var query = _context.ReservacionServicios
                 .Include(x => x.Servicio)
                 .Include(x => x.Reservacion)
-                    .ThenInclude(r => r!.Cliente) // El ! evita el warning de nulabilidad
+                    .ThenInclude(r => r!.Cliente)
                         .ThenInclude(c => c!.Persona)
                 .AsQueryable();
 
-            // Filtro por Cliente (Persona)
+
             if (!string.IsNullOrWhiteSpace(cliente))
             {
-                // Asumiendo que en Persona tienes Nombre1 y Apellido1 o similar
-                // Ajusta 'Nombre' según lo que diga tu clase Persona.cs
-                query = query.Where(x => x.Reservacion!.Cliente!.Persona!.Nombres.Contains(cliente));
+                query = query.Where(x => x.Reservacion!.Cliente!.Persona!.Nombres.ToLower().Contains(cliente.ToLower()));
             }
 
             if (idServicio.HasValue)
                 query = query.Where(x => x.IdServicio == idServicio.Value);
 
             if (fecha.HasValue)
-                query = query.Where(x => x.Reservacion!.FechaEntrada.Date == fecha.Value.Date);
+            {
+                var inicioDia = fecha.Value.Date;
+                var finDia = inicioDia.AddDays(1).AddTicks(-1);
+                query = query.Where(x => x.Reservacion!.FechaEntrada >= inicioDia && x.Reservacion!.FechaEntrada <= finDia);
+            }
 
-            int totalRegistros = await query.CountAsync();
-            
-            var items = await query
+            var rawItems = await query
                 .OrderByDescending(x => x.IdReservacion)
-                .Skip((pagina - 1) * registrosPorPagina)
-                .Take(registrosPorPagina)
-                .Select(x => new ReservacionServicioReadDto {
-                    IdReservacion = x.IdReservacion,
-                    IdServicio = x.IdServicio,
-                    Cantidad = x.Cantidad,
-                    NombreServicio = x.Servicio != null ? x.Servicio.Nombre : "N/A",
-                    // IMPORTANTE: Verifica si en Persona.cs es 'Nombre' o 'Nombres'
-                    NombreCliente = x.Reservacion!.Cliente!.Persona!.Nombres, 
-                    FechaEntrada = x.Reservacion.FechaEntrada,
-                    EstadoReserva = x.Reservacion.EstadoReserva
-                })
                 .ToListAsync();
 
-            return new PagedResultReservacionServicio<ReservacionServicioReadDto> {
-                Items = items,
+            var agrupado = rawItems
+                .GroupBy(x => x.IdReservacion)
+                .Select(g => new ReservacionServicioReadDto
+                {
+                    IdReservacion = g.Key,
+                    NombreCliente = g.First().Reservacion!.Cliente!.Persona!.Nombres,
+                    FechaEntrada = g.First().Reservacion!.FechaEntrada,
+                    EstadoReserva = g.First().Reservacion!.EstadoReserva,
+                    Servicios = g.Select(s => new DetalleServicioDto
+                    {
+                        IdServicio = s.IdServicio,
+                        NombreServicio = s.Servicio != null ? s.Servicio.Nombre : "N/A",
+                        Cantidad = s.Cantidad
+                    }).ToList()
+                }).ToList();
+
+            int totalRegistros = agrupado.Count;
+
+            var itemsPaginados = agrupado
+                .Skip((pagina - 1) * registrosPorPagina)
+                .Take(registrosPorPagina)
+                .ToList();
+
+            return new PagedResultReservacionServicio<ReservacionServicioReadDto>
+            {
+                Items = itemsPaginados,
                 TotalRegistros = totalRegistros,
                 PaginaActual = pagina,
                 TotalPaginas = (int)Math.Ceiling(totalRegistros / (double)registrosPorPagina)
@@ -64,18 +76,30 @@ namespace HiddenValley.API.Services
 
         public async Task<bool> CreateAsync(ReservacionServicioCreateDto dto)
         {
-            var ent = new ReservacionServicio { 
-                IdReservacion = dto.IdReservacion, 
-                IdServicio = dto.IdServicio, 
-                Cantidad = dto.Cantidad 
-            };
-            _context.ReservacionServicios.Add(ent);
+            var existente = await _context.ReservacionServicios
+                .FirstOrDefaultAsync(x => x.IdReservacion == dto.IdReservacion && x.IdServicio == dto.IdServicio);
+
+            if (existente != null)
+            {
+                existente.Cantidad += dto.Cantidad;
+            }
+            else
+            {
+                var ent = new ReservacionServicio
+                {
+                    IdReservacion = dto.IdReservacion,
+                    IdServicio = dto.IdServicio,
+                    Cantidad = dto.Cantidad
+                };
+                _context.ReservacionServicios.Add(ent);
+            }
+
             return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> UpdateAsync(int idRes, int idSer, ReservacionServicioUpdateDto dto)
         {
-            var ent = await _context.ReservacionServicios.FindAsync(idRes, idSer);
+            var ent = await _context.ReservacionServicios.FirstOrDefaultAsync(x => x.IdReservacion == idRes && x.IdServicio == idSer);
             if (ent == null) return false;
             ent.Cantidad = dto.Cantidad;
             return await _context.SaveChangesAsync() > 0;
@@ -83,7 +107,7 @@ namespace HiddenValley.API.Services
 
         public async Task<bool> DeleteAsync(int idRes, int idSer)
         {
-            var ent = await _context.ReservacionServicios.FindAsync(idRes, idSer);
+            var ent = await _context.ReservacionServicios.FirstOrDefaultAsync(x => x.IdReservacion == idRes && x.IdServicio == idSer);
             if (ent == null) return false;
             _context.ReservacionServicios.Remove(ent);
             return await _context.SaveChangesAsync() > 0;

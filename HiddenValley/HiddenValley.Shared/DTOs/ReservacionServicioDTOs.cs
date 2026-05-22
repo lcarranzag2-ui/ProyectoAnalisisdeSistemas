@@ -21,6 +21,7 @@ namespace HiddenValley.Shared.DTOs
         public int Cantidad { get; set; }
         public DateTime FechaEntrada { get; set; }
         public string? EstadoReserva { get; set; }
+        public List<DetalleServicioDto> Servicios { get; set; } = new();
     }
 
     public class PagedResultReservacionServicio<T>
@@ -29,5 +30,12 @@ namespace HiddenValley.Shared.DTOs
         public int TotalRegistros { get; set; }
         public int TotalPaginas { get; set; }
         public int PaginaActual { get; set; }
+    }
+
+    public class DetalleServicioDto
+    {
+        public int IdServicio { get; set; }
+        public string? NombreServicio { get; set; } = string.Empty;
+        public int Cantidad { get; set; }
     }
 }
