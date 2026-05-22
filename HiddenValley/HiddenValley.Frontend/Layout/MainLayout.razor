@@ -1,12 +1,16 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
+
+<div class="page @(menuOpen ? "menu-open" : "menu-closed")">
     <div class="sidebar">
         <NavMenu />
     </div>
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <button class="hamburger-btn" @onclick="ToggleMenu">
+                <span></span><span></span><span></span>
+            </button>
+            <span class="topbar-title">Hidden Valley</span>
         </div>
 
         <article class="content px-4">
@@ -14,3 +18,10 @@
         </article>
     </main>
 </div>
+
+@code {
+    private bool menuOpen = true;
+    private void ToggleMenu() => menuOpen = !menuOpen;
+}
+
+

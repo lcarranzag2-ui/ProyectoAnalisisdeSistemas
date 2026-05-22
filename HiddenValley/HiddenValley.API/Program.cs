@@ -27,6 +27,7 @@ builder.Services.AddScoped<ITipoCabanaService, TipoCabanaService>();
 builder.Services.AddScoped<IReservacionServicio, ReservacionServicioService>();
 builder.Services.AddScoped<IReservacionService, ReservacionService>();
 builder.Services.AddScoped<IEstadoCabanaService, EstadoCabanaService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services.AddControllers();
 

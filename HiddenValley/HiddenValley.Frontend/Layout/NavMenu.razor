@@ -1,6 +1,9 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">HiddenValley.Frontend</a>
+        <a class="navbar-brand" href="">
+            <img src="logo.png.jpeg" alt="Hidden Valley" class="sidebar-logo" />
+            Hidden Valley
+        </a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -11,12 +14,27 @@
     <nav class="nav flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <i class="fas fa-home"></i> Inicio
             </NavLink>
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="personas">
-                <span class="bi bi-people-fill" aria-hidden="true"></span> Administración Personas
+                <i class="fas fa-users"></i> Personas
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="reservaciones">
+                 <i class="fas fa-calendar-check"></i> Reservaciones
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="cabanas">
+                <i class="fas fa-house"></i> Cabañas
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="empleados">
+                <i class="fas fa-users"></i> Empleados
             </NavLink>
         </div>
        
@@ -28,12 +46,12 @@
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="tiposervicio">
-                <span class="bi bi-tags-fill" aria-hidden="true"></span> Tipos de Servicio
+                 <i class="fas fa-chart-bar"></i> Tipo de Servicio
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+            <NavLink class="nav-link" href="servicios">
+                <i class="fas fa-users"></i> Servicios
             </NavLink>
         </div>
     </nav>

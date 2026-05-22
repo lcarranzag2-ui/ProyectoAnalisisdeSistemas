@@ -1,3 +1,4 @@
+/* ── Estilos originales Blazor ── */
 .page {
     position: relative;
     display: flex;
@@ -6,10 +7,6 @@
 
 main {
     flex: 1;
-}
-
-.sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
 }
 
 .top-row {
@@ -51,13 +48,6 @@ main {
         flex-direction: row;
     }
 
-    .sidebar {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
-    }
-
     .top-row {
         position: sticky;
         top: 0;
@@ -73,5 +63,86 @@ main {
     .top-row, article {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
+    }
+}
+
+/* ── Hidden Valley — Sidebar ── */
+.sidebar {
+    background: linear-gradient(180deg, var(--hv-primary-dark) 0%, #255725 100%);
+    width: 250px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(63, 52, 52, 0.1);
+}
+
+.sidebar-logo {
+    width: 40px;
+    border-radius: 8px;
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-links li a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    color: #c6ebc8;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.nav-links li a:hover {
+    background: rgba(72, 151, 102, 0.1);
+    color: #ad9d9d;
+}
+
+.nav-links li a i {
+    font-size: 1.1rem;
+    min-width: 20px;
+    text-align: center;
+}
+
+.hamburger-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 4px;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+}
+
+@media (max-width: 640.98px) {
+    .sidebar {
+        display: none;
+    }
+
+    .sidebar.open {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        width: 250px;
+        z-index: 200;
     }
 }

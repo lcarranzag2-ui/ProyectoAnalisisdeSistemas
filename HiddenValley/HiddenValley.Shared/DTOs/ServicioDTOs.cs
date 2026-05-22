@@ -25,4 +25,10 @@ namespace HiddenValley.Shared.DTOs
         public string? Descripcion { get; set; }
         public decimal Precio { get; set; }
     }
+    public class PagedResponseServicio<T>
+    {
+        public IEnumerable<T> Items { get; set; } = Enumerable.Empty<T>();
+        public int TotalRecords { get; set; }
+        public int TotalPages { get; set; }
+    }
 }
