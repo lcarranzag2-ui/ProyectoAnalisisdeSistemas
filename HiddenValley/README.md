@@ -189,6 +189,23 @@ Los archivos que conforman este modulo son:
 - `HiddenValley.API/Interfaces/IDashboardService.cs`
 - `HiddenValley.API/Services/DashboardService.cs`
 - `HiddenValley.API/Controllers/DashboardController.cs`
+- `HiddenValley.Frontend/Interfaces/IDashboardService.cs`
+- `HiddenValley.Frontend/Service/DashboardService.cs`
+- `HiddenValley.Frontend/Pages/Dashboard.razor`
+
+---
+
+### Modulo Dashboard Frontend — PROYECT-91
+
+Vista de operaciones diarias del turicentro. Accesible desde `/dashboard`.
+
+Consume el endpoint `GET /api/dashboard` y muestra:
+
+- Tarjeta de cabanas disponibles
+- Tarjeta de cabanas ocupadas hoy
+- Tarjeta de personas esperadas hoy (check-in del dia)
+- Tabla de proximas reservaciones (hasta 5), con nombre del cliente, tipo de cabana, fechas, cantidad de personas y estado
+- Mensaje amigable cuando no hay reservaciones proximas programadas
 
 ---
 
@@ -198,6 +215,6 @@ Los archivos que conforman este modulo son:
 - Delmi Maria Fajardo
 - Keily Atalia Lopez Hernandez
 - Cristian Eduardo Chamo Morales
-- Ludin Eduardo Carranza Guerra (Módulo Reservaciones — PROYECT-60)
+- Ludin Eduardo Carranza Guerra 
 
 ESTUDIANTES DE INGENIERIA EN SISTEMAS DE LA UNIVERSIDAD MARIANO GALVEZ DE GUATEMALA SEDE EN JALAPA, JALAPA

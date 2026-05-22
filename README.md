@@ -54,5 +54,6 @@ Servidor de Base de Datos: localhost,1433
 - Delmi Maria Fajardo
 - Keily Atalia Lopez Hernandez
 - Cristian Eduardo Chamo Morales
+- Ludin Eduardo Carranza Guerra
 
 ESTUDIANTES DE INGENIERIA EN SISTEMAS DE LA UNIVERSIDAD MARIANO GALVEZ DE GUATEMALA SEDE EN JALAPA,JALAPA
