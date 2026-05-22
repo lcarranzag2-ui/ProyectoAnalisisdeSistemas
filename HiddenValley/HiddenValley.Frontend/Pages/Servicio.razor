@@ -1,0 +1,310 @@
+@page "/servicios"
+@using HiddenValley.Shared.DTOs
+@using HiddenValley.Frontend.Interfaces
+@using System.Globalization
+@inject IServicioService ServicioService
+@inject IJSRuntime JS
+
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <div>
+            <h1 class="fw-bold text-dark m-0" style="font-size: 2.5rem;">Servicios</h1>
+        </div>
+        <button class="btn text-white fw-bold px-4 py-2 shadow-sm" style="background-color: #1b4d22; border-radius: 6px; font-size: 1rem;" @onclick="AbrirModal">
+            Registrar Nuevo Servicio
+        </button>
+    </div>
+
+    <div class="d-flex gap-3 mb-4 align-items-center" style="max-width: 900px;">
+        <div class="input-group shadow-sm rounded-pill border bg-white px-2 py-1" style="max-width: 160px;">
+            <span class="input-group-text bg-white border-0 text-muted fw-bold" style="font-size: 0.9rem;">ID</span>
+            <input type="number" class="form-control border-0 bg-white m-0 p-1" placeholder="Buscar ID..." @bind-value="searchId" @bind-value:event="oninput" @onkeyup="ExecuteSearch" />
+        </div>
+        <div class="input-group shadow-sm rounded-pill border bg-white flex-grow-1 px-3 py-1">
+            <input type="text" class="form-control border-0 bg-white m-0 p-1" placeholder="Buscar por tipo o estado..." @bind-value="searchNombre" @bind-value:event="oninput" @onkeyup="ExecuteSearch" />
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 overflow-hidden mb-4" style="border-radius: 12px;">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead style="background-color: #5a4238; color: white; font-size: 1.05rem;">
+                    <tr>
+                        <th class="ps-4 py-3" style="width: 90px;">ID</th>
+                        <th class="py-3">Nombre del Servicio</th>
+                        <th class="py-3">Descripción</th>
+                        <th class="py-3">Precio</th>
+                        <th class="text-center py-3" style="width: 240px;">Acciones Administrativas</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 1rem;">
+                    @if (listaServiciosVisual == null)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="spinner-border text-success" role="status"></div>
+                                <p class="text-muted mt-2 mb-0">Cargando registros...</p>
+                            </td>
+                        </tr>
+                    }
+                    else if (!listaServiciosVisual.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5 fw-bold">
+                                No hay servicios que coincidan con la búsqueda.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var serv in listaServiciosVisual)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="badge text-white fw-bold d-flex align-items-center justify-content-center" 
+                                          style="width: 32px; height: 32px; font-size: 0.95rem; background-color: #7A6356; border-radius: 6px;">
+                                        @serv.IdServicio
+                                    </span>
+                                </td>
+                                <td class="fw-bold text-dark">
+                                    @if (idServicioEdicion == serv.IdServicio)
+                                    {
+                                        <input type="text" class="form-control form-control-sm shadow-sm" @bind-value="servicioEdicion.Nombre" />
+                                    }
+                                    else
+                                    {
+                                        @serv.Nombre
+                                    }
+                                </td>
+                                <td class="text-muted">
+                                    @if (idServicioEdicion == serv.IdServicio)
+                                    {
+                                        <input type="text" class="form-control form-control-sm shadow-sm" @bind-value="servicioEdicion.Descripcion" />
+                                    }
+                                    else
+                                    {
+                                        @serv.Descripcion
+                                    }
+                                </td>
+                                <td class="fw-bold text-dark">
+                                    @if (idServicioEdicion == serv.IdServicio)
+                                    {
+                                        <input type="number" class="form-control form-control-sm shadow-sm" @bind-value="servicioEdicion.Precio" step="0.01" />
+                                    }
+                                    else
+                                    {
+                                        <span>Q @serv.Precio.ToString("F2", CultureInfo.InvariantCulture)</span>
+                                    }
+                                </td>
+                                <td class="text-center pe-4">
+                                    @if (idServicioEdicion == serv.IdServicio)
+                                    {
+                                        <button class="btn btn-sm btn-success me-1 fw-bold shadow-sm px-3" @onclick="ExecuteModificacion">Guardar</button>
+                                        <button class="btn btn-sm btn-secondary fw-bold shadow-sm px-3" @onclick="AbortEdicion">Cancelar</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm text-white fw-bold me-2 px-3 py-1 shadow-sm" 
+                                                style="background-color: #f0ad4e; border-color: #f0ad4e; border-radius: 6px;" 
+                                                @onclick="() => StartEdicion(serv)">
+                                            Editar
+                                        </button>
+                                        <button class="btn btn-sm text-white fw-bold px-3 py-1 shadow-sm" 
+                                                style="background-color: #d9534f; border-color: #d9534f; border-radius: 6px;" 
+                                                @onclick="() => ExecuteBaja(serv)">
+                                            Eliminar
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center px-2 mb-5">
+        <div class="text-muted" style="font-size: 0.95rem;">
+            Mostrando página <span class="fw-bold text-dark">@currentPage</span> de <span class="fw-bold text-dark">@totalPages</span> (@totalRecords registros totales)
+        </div>
+        
+        <div class="d-flex align-items-center shadow-sm rounded overflow-hidden border">
+            <button class="btn btn-light btn-sm px-3 py-2 fw-bold text-secondary" 
+                    style="background-color: #f8f9fa; border-radius: 0;" 
+                    disabled="@(currentPage == 1)" 
+                    @onclick="() => GoToPage(currentPage - 1)">
+                Anterior
+            </button>
+            <span class="px-4 py-2 text-white fw-bold" style="background-color: #0d6efd; font-size: 0.95rem; min-width: 45px; text-align: center;">
+                @currentPage
+            </span>
+            <button class="btn btn-light btn-sm px-3 py-2 fw-bold text-secondary" 
+                    style="background-color: #f8f9fa; border-radius: 0;" 
+                    disabled="@(currentPage == totalPages)" 
+                    @onclick="() => GoToPage(currentPage + 1)">
+                Siguiente
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (mostrarModal)
+{
+    <div class="modal-backdrop fade show" style="background-color: rgba(0,0,0,0.5); z-index: 1040;"></div>
+    <div class="modal fade show d-block" tabindex="-1" style="z-index: 1050; top: 15%;">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 8px;">
+                <div class="modal-header text-white align-items-center py-3" style="background-color: #1b4d22; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                    <h5 class="modal-title fw-bold" style="font-size: 1.1rem;">Nuevo Servicio en Sistema</h5>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body p-4 bg-white">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark" style="font-size: 0.9rem;">Nombre del Servicio *</label>
+                        <input type="text" class="form-control border shadow-sm" placeholder="Ej. Alquiler de Kayak" @bind-value="nuevoServicio.Nombre" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark" style="font-size: 0.9rem;">Descripción Corta *</label>
+                        <input type="text" class="form-control border shadow-sm" placeholder="Detalles de la actividad..." @bind-value="nuevoServicio.Descripcion" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark" style="font-size: 0.9rem;">Precio Base de Venta (Q) *</label>
+                        <input type="number" class="form-control border shadow-sm" @bind-value="nuevoServicio.Precio" step="0.01" />
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top d-flex justify-content-end gap-2 py-3 px-4" style="border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                    <button type="button" class="btn btn-secondary fw-bold px-3" style="background-color: #6c757d;" @onclick="CerrarModal">Cancelar</button>
+                    <button type="button" class="btn text-white fw-bold px-3" style="background-color: #1b4d22;" @onclick="ExecuteAlta">Guardar Servicio</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private HiddenValley.Shared.DTOs.ServicioCreateDto nuevoServicio = new();
+    
+    // Lista donde se guardarán exclusivamente los elementos de la página actual
+    private List<HiddenValley.Shared.DTOs.ServicioReadDto>? listaServiciosVisual;
+
+    private string? searchNombre = "";
+    private int? searchId;
+
+    private int currentPage = 1;
+    private int pageSize = 5; // Cambiado a 5 filas por página
+    private int totalRecords = 0;
+    private int totalPages = 1;
+
+    private bool mostrarModal = false;
+
+    private HiddenValley.Shared.DTOs.UpdateServicioDto servicioEdicion = new();
+    private int idServicioEdicion = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            // SOLUCIÓN AL ERROR DE PAGINACIÓN:
+            // 1. Solicitamos un bloque grande (1000) para obtener de golpe todos los registros reales de la base de datos
+            var resultCompleto = await ServicioService.GetPagedAsync(1, 1000, searchNombre, searchId);
+            var listaCompleta = resultCompleto?.OrderBy(s => s.IdServicio).ToList() ?? new List<HiddenValley.Shared.DTOs.ServicioReadDto>();
+
+            // 2. Guardamos la cantidad real global de registros
+            totalRecords = listaCompleta.Count;
+
+            // 3. Calculamos matemáticamente las páginas totales basado en el volumen total real
+            totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
+            if (totalPages < 1) totalPages = 1;
+
+            // 4. Seguridad de desborde de páginas
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            // 5. El Frontend realiza el corte exacto de la página actual de forma segura
+            listaServiciosVisual = listaCompleta
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Error al cargar registros: {ex.Message}");
+            listaServiciosVisual = new List<HiddenValley.Shared.DTOs.ServicioReadDto>();
+            totalRecords = 0;
+            totalPages = 1;
+        }
+        StateHasChanged();
+    }
+
+    private void AbrirModal() { mostrarModal = true; nuevoServicio = new(); }
+    private void CerrarModal() { mostrarModal = false; }
+
+    private async Task ExecuteSearch()
+    {
+        currentPage = 1; 
+        await LoadDataAsync();
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        await LoadDataAsync();
+    }
+
+    private async Task ExecuteAlta()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoServicio.Nombre) || 
+            string.IsNullOrWhiteSpace(nuevoServicio.Descripcion) || 
+            nuevoServicio.Precio <= 0)
+        {
+            await JS.InvokeVoidAsync("alert", "Error: Todos los campos con (*) son requeridos.");
+            return;
+        }
+
+        var result = await ServicioService.CreateServicioAsync(nuevoServicio);
+        if (result != null)
+        {
+            CerrarModal();
+            currentPage = 1; 
+            await LoadDataAsync();
+        }
+    }
+
+    private void StartEdicion(HiddenValley.Shared.DTOs.ServicioReadDto serv)
+    {
+        idServicioEdicion = serv.IdServicio;
+        servicioEdicion = new HiddenValley.Shared.DTOs.UpdateServicioDto { Nombre = serv.Nombre, Descripcion = serv.Descripcion, Precio = serv.Precio };
+    }
+
+    private void AbortEdicion() { servicioEdicion = new HiddenValley.Shared.DTOs.UpdateServicioDto(); idServicioEdicion = 0; }
+
+    private async Task ExecuteModificacion()
+    {
+        if (idServicioEdicion == 0) return;
+
+        bool success = await ServicioService.PatchAsync(idServicioEdicion, servicioEdicion);
+        if (success)
+        {
+            AbortEdicion();
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task ExecuteBaja(HiddenValley.Shared.DTOs.ServicioReadDto serv)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", $"¿Remover el servicio '{serv.Nombre}' del sistema?");
+        if (!confirm) return;
+
+        bool success = await ServicioService.DeleteServicioAsync(serv.IdServicio);
+        if (success)
+        {
+            await LoadDataAsync();
+        }
+    }
+}

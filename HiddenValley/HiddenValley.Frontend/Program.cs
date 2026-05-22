@@ -22,5 +22,6 @@ builder.Services.AddScoped<ITipoServicioClient, TipoServicioClient>();
 builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 builder.Services.AddScoped<ICabanasService, CabanaService>();
 builder.Services.AddScoped<IReservacionService, ReservacionService>();
+builder.Services.AddScoped<IServicioService, ServicioService>();
 
 await builder.Build().RunAsync();
