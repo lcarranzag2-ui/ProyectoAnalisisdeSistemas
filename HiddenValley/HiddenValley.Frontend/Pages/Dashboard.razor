@@ -1,0 +1,170 @@
+@page "/dashboard"
+@using HiddenValley.Frontend.Interfaces
+@using HiddenValley.Shared.DTOs
+@inject IDashboardService DashboardSvc
+
+<!-- encabezado igual al de las otras paginas del sistema -->
+<div class="row align-items-center bg-light rounded shadow-sm p-4 mb-4 border-start border-4" style="border-color:#614035;">
+    <div class="col">
+        <h2 class="display-6 fw-bold text-dark mb-0">
+            <i class="fas fa-chart-line" style="color:#614035;"></i> Operaciones del Dia
+        </h2>
+        <p class="text-muted mb-0 small">Resumen en tiempo real — Hidden Valley</p>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-outline-secondary btn-sm" @onclick="CargarDatosAsync">
+            <i class="fas fa-sync-alt"></i> Actualizar
+        </button>
+    </div>
+</div>
+
+@if (_cargando)
+{
+    <div class="text-center p-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando datos...</span>
+        </div>
+        <p class="text-muted mt-2 small">Consultando el servidor...</p>
+    </div>
+}
+else if (_resumen == null)
+{
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        No se pudo obtener la informacion del servidor. Verifique que el backend este activo.
+    </div>
+}
+else
+{
+    <!-- tarjetas de metricas operativas -->
+    <div class="row g-3 mb-4">
+
+        <!-- cabanas disponibles -->
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:56px;height:56px;background:#e8f5e9;flex-shrink:0;">
+                        <i class="fas fa-house" style="font-size:1.5rem;color:#2e7d32;"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Cabanas Disponibles</div>
+                        <div class="fw-bold" style="font-size:2rem;color:#2e7d32;">@_resumen.CabanasDisponibles</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- cabanas ocupadas -->
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:56px;height:56px;background:#fce4ec;flex-shrink:0;">
+                        <i class="fas fa-door-closed" style="font-size:1.5rem;color:#c62828;"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Cabanas Ocupadas</div>
+                        <div class="fw-bold" style="font-size:2rem;color:#c62828;">@_resumen.CabanasOcupadasHoy</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- total personas esperadas hoy -->
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:56px;height:56px;background:#e3f2fd;flex-shrink:0;">
+                        <i class="fas fa-users" style="font-size:1.5rem;color:#1565c0;"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Personas Esperadas Hoy</div>
+                        <div class="fw-bold" style="font-size:2rem;color:#1565c0;">@_resumen.PersonasEsperadasHoy</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- tabla de proximas reservaciones -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header text-white fw-semibold" style="background:#614035;">
+            <i class="fas fa-calendar-alt me-2"></i> Proximas Reservaciones
+        </div>
+        <div class="card-body p-0">
+
+            @if (_resumen.ProximasReservas == null || !_resumen.ProximasReservas.Any())
+            {
+                <div class="p-4 text-center text-muted">
+                    <i class="fas fa-calendar-times fa-2x mb-2 d-block"></i>
+                    No hay proximas reservaciones programadas
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead style="background:#f5ebe0;">
+                            <tr>
+                                <th class="ps-3">#</th>
+                                <th>Cliente</th>
+                                <th>Tipo de Cabana</th>
+                                <th>Entrada</th>
+                                <th>Salida</th>
+                                <th>Personas</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in _resumen.ProximasReservas)
+                            {
+                                <tr>
+                                    <td class="ps-3 text-muted small">@r.Id</td>
+                                    <td class="fw-semibold">@r.NombreCliente</td>
+                                    <td>@r.TipoCabana</td>
+                                    <td>@r.FechaEntrada.ToString("dd/MM/yyyy")</td>
+                                    <td>@r.FechaSalida.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-center">@r.CantidadPersonas</td>
+                                    <td>
+                                        <span class="badge @BadgeClase(r.EstadoReserva)">@r.EstadoReserva</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+        </div>
+    </div>
+}
+
+@code {
+    private DashboardResumenDto? _resumen;
+    private bool _cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosAsync();
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        _cargando = true;
+        _resumen = await DashboardSvc.GetResumenAsync();
+        _cargando = false;
+    }
+
+    // devuelve la clase de bootstrap para el badge segun el estado de la reserva
+    private static string BadgeClase(string estado) => estado switch
+    {
+        "Confirmada"  => "bg-success",
+        "Recibida"    => "bg-primary",
+        "En Proceso"  => "bg-warning text-dark",
+        "Cancelada"   => "bg-danger",
+        _             => "bg-secondary"
+    };
+}
