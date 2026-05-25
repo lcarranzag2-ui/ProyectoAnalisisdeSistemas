@@ -23,6 +23,7 @@ builder.Services.AddScoped<ITipoServicioClient, TipoServicioClient>();
 builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 builder.Services.AddScoped<ICabanasService, CabanaService>();
 builder.Services.AddScoped<IReservacionService, ReservacionService>();
+builder.Services.AddScoped<IPuestoTrabajoService, PuestoTrabajoService>();
 builder.Services.AddScoped<IServicioService, ServicioService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IReservacionServicioService, ReservacionServicioService>();
