@@ -47,14 +47,30 @@ public class ClienteClient : IClienteClient
 
     public async Task<(bool Success, string Message, int? Id)> CrearClienteAsync(ClienteCreateDTO dto)
     {
-        var response = await _http.PostAsJsonAsync("api/clientes", dto);
-        if (response.IsSuccessStatusCode)
+        try
         {
-            var result = await response.Content.ReadFromJsonAsync<dynamic>();
-            return (true, "Cliente creado exitosamente", (int?)result?.Id);
+            var response = await _http.PostAsJsonAsync("api/clientes", dto);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                try 
+                {
+                    var result = await response.Content.ReadFromJsonAsync<ClienteDetalleDTO>();
+                    return (true, "Cliente creado exitosamente", result?.IdCliente);
+                }
+                catch
+                {
+                    return (true, "Cliente creado exitosamente", null);
+                }
+            }
+            
+            var error = await response.Content.ReadAsStringAsync();
+            return (false, $"Error del servidor: {error}", null);
         }
-        var error = await response.Content.ReadAsStringAsync();
-        return (false, error, null);
+        catch (Exception ex)
+        {
+            return (false, $"Error de comunicación: {ex.Message}", null);
+        }
     }
 
     public async Task<(bool Success, string Message)> ActualizarClienteAsync(int idCliente, ClientePatchDTO dto)
