@@ -1,8 +1,10 @@
 @page "/cabanas"
 @using System.Text.Json
+@using System.Globalization
 @using HiddenValley.Frontend.Interfaces
 @using HiddenValley.Shared.DTOs
 @inject ICabanasService CabanaService
+@inject ITipoCabanaService TipoCabanaService
 @inject IJSRuntime jsRuntime
 @inject ICabanasService CabanaService
 
@@ -67,9 +69,13 @@
             </div>
         </div>
         <div class="col-md-6 col-12 text-md-end text-start">
+            <button class="btn btn-success btn-lg shadow-sm"  style="background-color: #5d4037;" @onclick="AbrirModalTiposBtn">
+                <i class="bi bi-plus-circle-fill me-2"></i> Gestionar Tipos de Cabaña
+            </button>
             <button class="btn btn-success btn-lg shadow-sm" @onclick="AbrirModalRegistro">
                 <i class="bi bi-plus-circle-fill me-2"></i> Registrar Nueva Cabaña
             </button>
+           
         </div>
     </div>
 
@@ -134,7 +140,10 @@
 
                             <td class="fw-bold text-dark">@tipoCabana</td>
                             <td><span class="badge bg-light text-dark border">@capacidad personas</span></td>
-                            <td class="text-success fw-bold">@precio.ToString("C")</td>
+                            
+                            @* MODIFICACIÓN: Uso de formato regional para Guatemala *@
+                            <td class="text-success fw-bold">@precio.ToString("F2", CultureInfo.InvariantCulture)</td>
+                            
                             <td>
                                 <span class="badge px-3 py-2 rounded-pill @(GetBadgeClase(estadoActual))">
                                     @estadoActual
@@ -152,6 +161,8 @@
                                             <option value="Ocupada">Ocupada</option>
                                             <option value="Mantenimiento">Mantenimiento</option>
                                             <option value="Reservada">Reservada</option>
+                                            @* MODIFICACIÓN: Nueva opción añadida al select *@
+                                            <option value="Confirmada">Confirmada</option>
                                         </select>
                                     </div>
 
@@ -201,22 +212,30 @@
                 </div>
                 <div class="modal-body p-4">
                     <EditForm Model="@nuevoRegistro" OnValidSubmit="ProcesarRegistroCabana">
-                        
                         <div class="mb-3">
                             <label class="form-label fw-bold">Tipo de Estructura / Suite</label>
                             <select class="form-select" @bind="nuevoRegistro.IdTipoCabana" required>
                                 <option value="0" disabled selected>-- Selecciona el tipo --</option>
-                                <option value="1">Suite Matrimonial</option>
-                                <option value="2">Cabaña Familiar</option>
-                                <option value="3">Bungalow Ejecutivo</option>
+                                @if (listaTiposCabana != null)
+                                {
+                                    @foreach (var tipo in listaTiposCabana)
+                                    {
+                                        <option value="@tipo.IdTipoCabana">@tipo.Nombre</option>
+                                    }
+                                }
                             </select>
                         </div>
+
 
                         <div class="mb-4">
                             <label class="form-label fw-bold">Estado de Apertura Inicial</label>
                             <select class="form-select" @bind="nuevoRegistro.IdEstadoCabana" required>
                                 <option value="1">Disponible (ID: 1)</option>
+                                <option value="2">Ocupada (ID: 2)</option>
                                 <option value="3">Mantenimiento (ID: 3)</option>
+                                <option value="4">Reservada (ID: 4)</option>
+                                <option value="5">Confirmada (ID: 5)</option>
+
                             </select>
                         </div>
 
@@ -233,6 +252,150 @@
     </div>
 }
 
+@if (mostrarModalTipos)
+{
+    <div class="modal-backdrop fade show" style="background-color: rgba(0,0,0,0.5); z-index: 1060;"></div>
+    <div class="modal fade show d-block" tabindex="-1" style="z-index: 1070; top: 3%;">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+                <div class="modal-header text-white align-items-center py-3" style="background-color: #5d4037; border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                    <h5 class="modal-title fw-bold m-0">Gestionar Categorías y Model de Cabaña</h5>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close" @onclick="CerrarModalTipos"></button>
+                </div>
+                <div class="modal-body p-4 bg-white" style="max-height: 80vh; overflow-y: auto;">
+                    <div class="card p-3 mb-4 border-0 shadow-sm" style="background-color: #efebe9; border-radius: 8px;">
+                        <h6 class="fw-bold mb-3" style="color: #5d4037;">Registrar Nueva Categoría Base</h6>
+                        <EditForm Model="@nuevoTipoDto" OnValidSubmit="HandleCrearTipo">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted">NOMBRE *</label>
+                                    <InputText @bind-Value="nuevoTipoDto.Nombre" class="form-control form-control-sm shadow-sm" placeholder="Ej. Suite Familiar" required />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold text-muted">CAPACIDAD (Pers.) *</label>
+                                    <InputNumber @bind-Value="nuevoTipoDto.Capacidad" class="form-control form-control-sm shadow-sm" min="1" required />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold text-muted">PRECIO POR NOCHE *</label>
+                                    <InputNumber @bind-Value="nuevoTipoDto.Precio" class="form-control form-control-sm shadow-sm" placeholder="0.00" step="0.01" required />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted">DESCRIPCIÓN</label>
+                                    <InputText @bind-Value="nuevoTipoDto.Descripcion" class="form-control form-control-sm shadow-sm" placeholder="Opcional" />
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-sm text-white fw-bold w-100 py-2 shadow-sm" style="background-color: #1b4d22; border-radius: 4px;">
+                                        Guardar Tipo
+                                    </button>
+                                </div>
+                            </div>
+                        </EditForm>
+                    </div>
+
+                    <div class="border rounded overflow-hidden shadow-sm">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead style="background-color: #2d5a27; color: white;">
+                                <tr>
+                                    <th class="ps-3 py-2" style="width: 70px;">ID</th>
+                                    <th class="py-2">Nombre de la Categoría</th>
+                                    <th class="py-2" style="width: 130px;">Capacidad</th>
+                                    <th class="py-2" style="width: 150px;">Precio Estándar</th>
+                                    <th class="py-2">Descripción</th>
+                                    <th class="text-center py-2" style="width: 180px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (listaTiposCabana == null)
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                                            <span class="ms-2 text-muted small">Cargando modelos...</span>
+                                        </td>
+                                    </tr>
+                                }
+                                else if (!listaTiposCabana.Any())
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted fw-bold">No hay modelos configurados en el sistema.</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var tipo in listaTiposCabana)
+                                    {
+                                        <tr style="@(tipoSeleccionadoEdicion?.IdTipoCabana == tipo.IdTipoCabana ? "background-color: #fffde7;" : "")">
+                                            <td class="ps-3 fw-bold text-muted">@tipo.IdTipoCabana</td>
+                                            <td>
+                                                @if (tipoSeleccionadoEdicion?.IdTipoCabana == tipo.IdTipoCabana)
+                                                {
+                                                    <input type="text" class="form-control form-control-sm" @bind="editNombre" />
+                                                }
+                                                else
+                                                {
+                                                    <span class="fw-bold text-dark">@tipo.Nombre</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (tipoSeleccionadoEdicion?.IdTipoCabana == tipo.IdTipoCabana)
+                                                {
+                                                    <input type="number" class="form-control form-control-sm" @bind="editCapacidad" min="1" />
+                                                }
+                                                else
+                                                {
+                                                    <span>@tipo.Capacidad Personas</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (tipoSeleccionadoEdicion?.IdTipoCabana == tipo.IdTipoCabana)
+                                                {
+                                                    <input type="number" class="form-control form-control-sm" @bind="editPrecio" step="0.01" />
+                                                }
+                                                else
+                                                {
+                                                    @* DISEÑO MANTENIDO: Formato con 'Q', punto decimal y coma en millares *@
+                                                    <span class="fw-bold text-success">@tipo.Precio.ToString("C", formatoMonedaGuate)</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (tipoSeleccionadoEdicion?.IdTipoCabana == tipo.IdTipoCabana)
+                                                {
+                                                    <input type="text" class="form-control form-control-sm" @bind="editDescripcion" />
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">@(string.IsNullOrEmpty(tipo.Descripcion) ? "Sin descripción" : tipo.Descripcion)</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                @if (tipoSeleccionadoEdicion?.IdTipoCabana == tipo.IdTipoCabana)
+                                                {
+                                                    <button class="btn btn-sm btn-success py-0 px-2 me-1" @onclick="GuardarCambiosTipo">Guardar</button>
+                                                    <button class="btn btn-sm btn-secondary py-0 px-1" @onclick="CancelarEdicionTipo">X</button>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn btn-sm btn-warning text-white py-0 px-2 me-1" @onclick="() => IniciarEdicionTipo(tipo)">Editar</button>
+                                                    <button class="btn btn-sm btn-danger py-0 px-2" @onclick="() => EliminarTipo(tipo)">Eliminar</button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2 px-4">
+                    <button type="button" class="btn btn-sm btn-secondary fw-bold" @onclick="CerrarModalTipos">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+
 @code {
     private PagedResponse<object>? cabanasResponse;
     private string? searchTerm = "";
@@ -244,6 +407,20 @@
 
     private bool mostrarModalRegistro = false;
     private RegistrarCabanaRequest nuevoRegistro = new();
+    //tipos de cabaña
+    private bool mostrarModalTipos = false;
+    private IEnumerable<TipoCabanaDTO>? listaTiposCabana;
+    
+    // DTOs de transferencia para altas y cambios
+    private TipoCabanaCreateDTO nuevoTipoDto = new() { Capacidad = 2, Precio = 0 };
+    private TipoCabanaDTO? tipoSeleccionadoEdicion;
+
+    // Campos temporales para la edición en línea dentro de la tabla
+    private string editNombre = "";
+    private string editDescripcion = "";
+    private int editCapacidad = 2;
+    private decimal editPrecio = 0;
+    private CultureInfo formatoMonedaGuate = CultureInfo.GetCultureInfo("es-GT");
 
     protected override async Task OnInitializedAsync()
     {
@@ -288,20 +465,20 @@
     }
 
     private async Task CambiarEstado(int idCabana, string nuevoEstado)
-{
-    var request = new CambiarEstadoRequest { IdCabana = idCabana, NuevoEstado = nuevoEstado };
-    var resultado = await CabanaService.CambiarEstadoAsync(request);
-    
-    if (resultado.Success)
     {
-        mensajeAlert = null; 
-        await CargarCabanas();
+        var request = new CambiarEstadoRequest { IdCabana = idCabana, NuevoEstado = nuevoEstado };
+        var resultado = await CabanaService.CambiarEstadoAsync(request);
+        
+        if (resultado.Success)
+        {
+            mensajeAlert = null; 
+            await CargarCabanas();
+        }
+        else
+        {
+            MostrarAlerta(resultado.Success, resultado.Message ?? "No se pudo cambiar el estado.");
+        }
     }
-    else
-    {
-        MostrarAlerta(resultado.Success, resultado.Message ?? "No se pudo cambiar el estado.");
-    }
-}
 
     private async Task EliminarCabana(int idCabana)
     {
@@ -316,13 +493,14 @@
         }
     }
 
-    private void AbrirModalRegistro()
+    private async Task AbrirModalRegistro() 
     {
         nuevoRegistro = new RegistrarCabanaRequest 
         { 
             IdTipoCabana = 0, 
             IdEstadoCabana = 1 
         };
+        await CargarTiposCabana(); 
         mostrarModalRegistro = true;
     }
 
@@ -394,4 +572,114 @@
         "disponible" => "#991b1b",
         _ => "#4b5563"
     };
+
+    //tipos de cabaña
+    private async Task CargarTiposCabana()
+    {
+        listaTiposCabana = await TipoCabanaService.GetAllAsync();
+    }
+
+    private async Task AbrirModalTiposBtn()
+    {
+        mostrarModalTipos = true;
+        await CargarTiposCabana();
+    }
+
+    private void CerrarModalTipos()
+    {
+        mostrarModalTipos = false;
+        CancelarEdicionTipo();
+    }
+
+    private async Task HandleCrearTipo()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoTipoDto.Nombre) || nuevoTipoDto.Precio <= 0)
+        {
+            await jsRuntime.InvokeVoidAsync("alert", "Error: El Nombre es obligatorio y el Precio debe ser mayor a 0.");
+            return;
+        }
+
+        try
+        {
+            var resultado = await TipoCabanaService.CreateAsync(nuevoTipoDto);
+            if (resultado != null && resultado.IdTipoCabana > 0)
+            {
+                await jsRuntime.InvokeVoidAsync("alert", "Categoría registrada con éxito.");
+                nuevoTipoDto = new TipoCabanaCreateDTO() { Capacidad = 2, Precio = 0 }; // Reset
+                await CargarTiposCabana();
+            }
+        }
+        catch (Exception ex)
+        {
+            await jsRuntime.InvokeVoidAsync("alert", $"Error del servidor: {ex.Message}");
+        }
+    }
+
+    private void IniciarEdicionTipo(TipoCabanaDTO tipo)
+    {
+        tipoSeleccionadoEdicion = tipo;
+        editNombre = tipo.Nombre;
+        editDescripcion = tipo.Descripcion ?? "";
+        editCapacidad = tipo.Capacidad;
+        editPrecio = tipo.Precio;
+    }
+
+    private void CancelarEdicionTipo()
+    {
+        tipoSeleccionadoEdicion = null;
+        editNombre = "";
+        editDescripcion = "";
+        editCapacidad = 2;
+        editPrecio = 0;
+    }
+
+    private async Task GuardarCambiosTipo()
+    {
+        if (tipoSeleccionadoEdicion == null) return;
+
+        if (string.IsNullOrWhiteSpace(editNombre) || editPrecio <= 0)
+        {
+            await jsRuntime.InvokeVoidAsync("alert", "Error: El nombre no puede estar vacío y el precio debe ser mayor a 0.");
+            return;
+        }
+
+        var updateDto = new TipoCabanaCreateDTO 
+        { 
+            Nombre = editNombre, 
+            Descripcion = editDescripcion,
+            Capacidad = editCapacidad,
+            Precio = editPrecio 
+        };
+
+        var (success, message) = await TipoCabanaService.UpdateAsync(tipoSeleccionadoEdicion.IdTipoCabana, updateDto);
+
+        if (success)
+        {
+            await jsRuntime.InvokeVoidAsync("alert", "Categoría modificada con éxito.");
+            CancelarEdicionTipo();
+            await CargarTiposCabana();
+        }
+        else
+        {
+            await jsRuntime.InvokeVoidAsync("alert", $"No se pudo actualizar: {message}");
+        }
+    }
+
+    private async Task EliminarTipo(TipoCabanaDTO tipo)
+    {
+        bool confirmar = await jsRuntime.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar de forma definitiva la categoría '{tipo.Nombre}'?");
+        if (!confirmar) return;
+
+        var (success, message) = await TipoCabanaService.DeleteAsync(tipo.IdTipoCabana);
+        
+        if (success)
+        {
+            await jsRuntime.InvokeVoidAsync("alert", "Categoría eliminada de forma definitiva.");
+            await CargarTiposCabana();
+        }
+        else
+        {
+            await jsRuntime.InvokeVoidAsync("alert", $"Acción Bloqueada: {message}");
+        }
+    }
 }
