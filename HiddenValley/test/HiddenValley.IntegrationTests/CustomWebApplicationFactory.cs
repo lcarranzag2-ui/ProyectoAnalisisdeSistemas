@@ -13,7 +13,6 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
     {
         builder.ConfigureServices(services =>
         {
-            // 1. Remover TODA la configuración previa del DbContext (Opciones y el Contexto mismo)
             var dbContextOptionsDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
             if (dbContextOptionsDescriptor != null) services.Remove(dbContextOptionsDescriptor);
@@ -26,18 +25,14 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<TProg
                 d => d.ServiceType == typeof(ApplicationDbContext));
             if (dbContextDescriptor != null) services.Remove(dbContextDescriptor);
 
-
-            // 2. Crear un proveedor de servicios interno aislado EXCLUSIVO para InMemory.
-            // Esto evita por completo que las extensiones de PostgreSQL salpiquen tus pruebas.
             var internalServiceProvider = new ServiceCollection()
                 .AddEntityFrameworkInMemoryDatabase()
                 .BuildServiceProvider();
 
-            // 3. Registrar el contexto obligándolo a usar el proveedor aislado en memoria
             services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseInMemoryDatabase("HiddenValleyIntegrationTestDb")
-                       .UseInternalServiceProvider(internalServiceProvider); // Fuerza el aislamiento de EF Core
+                       .UseInternalServiceProvider(internalServiceProvider);
             });
         });
     }

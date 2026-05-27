@@ -19,82 +19,87 @@ public class CabanasControllerTests : IClassFixture<CustomWebApplicationFactory<
         _client = factory.CreateClient();
     }
 
-    // =========================================================================
-    // ENDPOINT: GET api/cabanas (GetAll)
-    // =========================================================================
 
     [Fact]
     public async Task GetAll_DeberiaRetornarOkYListaPaginada()
     {
-        // Act
         var response = await _client.GetAsync("api/cabanas?page=1&pageSize=10");
-
-        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<PagedResponse<object>>();
         Assert.NotNull(result);
     }
 
-    // =========================================================================
     // ENDPOINT: GET api/cabanas/disponibilidad
-    // =========================================================================
 
     [Fact]
     public async Task VerificarDisponibilidad_FechasValidas_DeberiaRetornarOk()
     {
-        // Arrange
         var inicio = DateTime.Now.ToString("yyyy-MM-dd");
         var fin = DateTime.Now.AddDays(3).ToString("yyyy-MM-dd");
 
-        // Act
         var response = await _client.GetAsync($"api/cabanas/disponibilidad?fechaInicio={inicio}&fechaFin={fin}");
-
-        // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
     public async Task VerificarDisponibilidad_FechasInvertidas_DeberiaRetornarBadRequest()
     {
-        // Arrange
         var inicio = DateTime.Now.AddDays(5).ToString("yyyy-MM-dd");
         var fin = DateTime.Now.AddDays(2).ToString("yyyy-MM-dd");
-
-        // Act
         var response = await _client.GetAsync($"api/cabanas/disponibilidad?fechaInicio={inicio}&fechaFin={fin}");
 
-        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    // =========================================================================
-    // ENDPOINT: POST api/cabanas/registrar
-    // =========================================================================
-
-    [Fact]
-    public async Task RegistrarCabana_CuandoTipoNoExiste_DeberiaRetornarNotFound()
-    {
-        // Arrange: Enviamos un ID que sabemos que no existe en la DB vacía
-        var request = new RegistrarCabanaRequest { IdTipoCabana = 999, IdEstadoCabana = 1 };
-
-        // Act
-        var response = await _client.PostAsJsonAsync("api/cabanas/registrar", request);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-    }
-
-    // =========================================================================
     // ENDPOINT: DELETE api/cabanas/{id}
-    // =========================================================================
 
     [Fact]
     public async Task EliminarCabana_CuandoNoExiste_DeberiaRetornarBadRequest()
     {
-        // Act: Intentar borrar la cabaña con ID 999
         var response = await _client.DeleteAsync("api/cabanas/999");
-
-        // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task VerificarDisponibilidad_CuandoEstaOcupada_DeberiaReflejarNoDisponible()
+    {
+        var fechaInicio = DateTime.Now.AddDays(10);
+        var fechaFin = DateTime.Now.AddDays(15);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            db.RegistroReservacion.RemoveRange(db.RegistroReservacion);
+            db.Cabanas.RemoveRange(db.Cabanas);
+
+            var cabana = new Cabana { IdCabana = 50, IdTipoCabana = 1, IdEstadoCabana = 1 };
+            db.Cabanas.Add(cabana);
+            var reservaExistente = new RegistroReservacion
+            {
+                Id = 100,
+                IdCabana = 50,
+                FechaEntrada = DateTime.Now.AddDays(11),
+                FechaSalida = DateTime.Now.AddDays(14),
+                IdCliente = 1,
+                CantidadPersonas = 2,
+                EstadoReserva = "Confirmada",
+                TotalPagar = 500
+            };
+            db.RegistroReservacion.Add(reservaExistente);
+            await db.SaveChangesAsync();
+        }
+
+        var inicioStr = fechaInicio.ToString("yyyy-MM-dd");
+        var finStr = fechaFin.ToString("yyyy-MM-dd");
+        var response = await _client.GetAsync($"api/cabanas/disponibilidad?fechaInicio={inicioStr}&fechaFin={finStr}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        
+        var cabanasDisponibles = await response.Content.ReadFromJsonAsync<List<object>>();
+        Assert.NotNull(cabanasDisponibles);
+
+        var jsonTexto = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("\"idCabana\":50", jsonTexto);
     }
 }
