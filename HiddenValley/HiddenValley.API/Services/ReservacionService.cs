@@ -124,6 +124,7 @@ public class ReservacionService(ApplicationDbContext context) : IReservacionServ
         };
 
         context.RegistroReservacion.Add(nueva);
+        cabana.IdCabana=2;
         await context.SaveChangesAsync();
 
         return (true, "Reservación creada con éxito.", nueva.Id, nueva.TotalPagar, noches);
