@@ -16,6 +16,8 @@ public class TipoCabanaService(ApplicationDbContext context) : ITipoCabanaServic
             {
                 IdTipoCabana = t.IdTipoCabana,
                 Nombre = t.Nombre,
+                Descripcion = t.Descripcion,
+                Capacidad = t.Capacidad,
                 Precio = t.Precio
             })
             .ToListAsync();
@@ -30,6 +32,8 @@ public class TipoCabanaService(ApplicationDbContext context) : ITipoCabanaServic
         {
             IdTipoCabana = tipo.IdTipoCabana,
             Nombre = tipo.Nombre,
+            Descripcion = tipo.Descripcion,
+            Capacidad = tipo.Capacidad,
             Precio = tipo.Precio
         };
     }
@@ -39,7 +43,11 @@ public class TipoCabanaService(ApplicationDbContext context) : ITipoCabanaServic
         var nuevoTipo = new TipoCabana
         {
             Nombre = dto.Nombre,
+            Descripcion = dto.Descripcion,
+            Capacidad = dto.Capacidad,
             Precio = dto.Precio
+            
+
         };
 
         context.TiposCabana.Add(nuevoTipo);
@@ -49,6 +57,8 @@ public class TipoCabanaService(ApplicationDbContext context) : ITipoCabanaServic
         {
             IdTipoCabana = nuevoTipo.IdTipoCabana,
             Nombre = nuevoTipo.Nombre,
+            Descripcion = nuevoTipo.Descripcion,
+            Capacidad = nuevoTipo.Capacidad,
             Precio = nuevoTipo.Precio
         };
     }
@@ -59,6 +69,8 @@ public class TipoCabanaService(ApplicationDbContext context) : ITipoCabanaServic
         if (tipo == null) return (false, "Tipo de cabaña no encontrado.");
 
         if (!string.IsNullOrWhiteSpace(dto.Nombre)) tipo.Nombre = dto.Nombre;
+        if (!string.IsNullOrWhiteSpace(dto.Descripcion)) tipo.Descripcion = dto.Descripcion;
+        if (dto.Capacidad > 0) tipo.Capacidad = dto.Capacidad;
         if (dto.Precio > 0) tipo.Precio = dto.Precio;
 
         await context.SaveChangesAsync();

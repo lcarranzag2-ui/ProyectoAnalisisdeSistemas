@@ -13,6 +13,6 @@ public class PuestoTrabajo
     [Required, MaxLength(50)]
     [Column("nombre")]
     public string Nombre { get; set; } = null!;
-
+    [Column("descripcion")]
     public string? Descripcion { get; set; }
 }

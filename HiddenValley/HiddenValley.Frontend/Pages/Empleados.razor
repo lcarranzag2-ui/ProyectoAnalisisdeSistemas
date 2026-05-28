@@ -2,6 +2,7 @@
 @using HiddenValley.Shared.DTOs
 @using HiddenValley.Frontend.Interfaces
 @inject IEmpleadoService EmpleadoService
+@inject IPuestoTrabajoService PuestoSvc
 @inject IJSRuntime JS
 
 <style>
@@ -181,8 +182,11 @@
     </div>
     @* Formulario de Registro Estilizado *@
     <div class="card hv-card">
-        <div class="hv-card-header">
-            <i class="bi bi-person-plus-fill me-2"></i> Registrar Nuevo Empleado 
+        <div class="hv-card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-person-plus-fill me-2"></i> Registrar Nuevo Empleado</span>
+            <button class="btn btn-sm btn-light fw-semibold" @onclick="AbrirModalPuestos">
+                <i class="bi bi-briefcase-fill me-1"></i> Gestionar Puestos
+            </button>
         </div>
         <div class="card-body p-4" style="background-color: #fdfcf7;">
             <EditForm Model="@nuevoEmpleado" OnValidSubmit="HandleRegistration">
@@ -353,6 +357,98 @@
 </div>
 
 @code {
+    // ── Puestos de Trabajo — Modal ────────────────────────────────────────
+    private bool _modalPuestos = false;
+    private PagedResponse<PuestoTrabajoResponseDto> _puestosPaged = new();
+    private string? _puestoBusqueda;
+    private int     _puestoPagina   = 1;
+    private int     _puestoPageSize = 5;
+    private string? _puestoAlerta;
+    private string  _puestoAlertaTipo = "success";
+
+    // Crear puesto
+    private PuestoTrabajoCreateDto _puestoNuevo = new();
+    private bool _puestoGuardando = false;
+
+    // Editar puesto
+    private int?   _puestoEditId;
+    private string _puestoEditNombre = "";
+    private string _puestoEditDesc   = "";
+
+    private async Task AbrirModalPuestos()
+    {
+        _puestoBusqueda = null;
+        _puestoPagina   = 1;
+        _puestoAlerta   = null;
+        _puestoEditId   = null;
+        _puestoNuevo    = new();
+        await CargarPuestos();
+        _modalPuestos = true;
+    }
+
+    private void CerrarModalPuestos() => _modalPuestos = false;
+
+    private async Task CargarPuestos()
+        => _puestosPaged = await PuestoSvc.GetPagedAsync(_puestoBusqueda, _puestoPagina, _puestoPageSize);
+
+    private async Task BuscarPuestos() { _puestoPagina = 1; await CargarPuestos(); }
+
+    private async Task PuestoCambiarPagina(int p)
+    {
+        if (p < 1 || p > _puestosPaged.TotalPages) return;
+        _puestoPagina = p;
+        await CargarPuestos();
+    }
+
+    private async Task CrearPuesto()
+    {
+        if (string.IsNullOrWhiteSpace(_puestoNuevo.Nombre))
+        { PuestoAlerta(false, "El nombre del puesto es obligatorio."); return; }
+
+        _puestoGuardando = true;
+        var res = await PuestoSvc.CreateAsync(_puestoNuevo);
+        _puestoGuardando = false;
+        PuestoAlerta(res.Success, res.Message);
+        if (res.Success) { _puestoNuevo = new(); await CargarPuestos(); }
+    }
+
+    private void IniciarEditarPuesto(PuestoTrabajoResponseDto p)
+    {
+        _puestoEditId     = p.IdPuestoTrabajo;
+        _puestoEditNombre = p.Nombre;
+        _puestoEditDesc   = p.Descripcion ?? "";
+        _puestoAlerta     = null;
+    }
+
+    private void CancelarEditarPuesto() => _puestoEditId = null;
+
+    private async Task GuardarEditarPuesto()
+    {
+        if (_puestoEditId == null) return;
+        if (string.IsNullOrWhiteSpace(_puestoEditNombre))
+        { PuestoAlerta(false, "El nombre no puede quedar vacío."); return; }
+
+        var dto = new PuestotrabajoPatchDto
+        {
+            Nombre      = _puestoEditNombre,
+            Descripcion = string.IsNullOrWhiteSpace(_puestoEditDesc) ? null : _puestoEditDesc
+        };
+        var res = await PuestoSvc.PatchAsync(_puestoEditId.Value, dto);
+        PuestoAlerta(res.Success, res.Message);
+        if (res.Success) { _puestoEditId = null; await CargarPuestos(); }
+    }
+
+    private async Task EliminarPuesto(int id)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", $"¿Eliminar permanentemente el puesto #{id}?")) return;
+        var res = await PuestoSvc.DeleteAsync(id);
+        PuestoAlerta(res.Success, res.Message);
+        if (res.Success) await CargarPuestos();
+    }
+
+    private void PuestoAlerta(bool ok, string msg) { _puestoAlerta = msg; _puestoAlertaTipo = ok ? "success" : "danger"; }
+
+    // ── Empleados ─────────────────────────────────────────────────────────
     private EmpleadoCreateDTO nuevoEmpleado = new();
     private List<EmpleadoResponseDTO>? listaEmpleados;
     
@@ -395,7 +491,7 @@
         
         if (success)
         {
-            await JS.InvokeVoidAsync("alert", "Empleado dado de alta exitosamente.");
+            await JS.InvokeVoidAsync("alert", "Empleado creado exitosamentes.");
             nuevoEmpleado = new();
             currentPage = 1;
             await CargarEmpleados();
@@ -494,4 +590,167 @@
             await JS.InvokeVoidAsync("alert", message);
         }
     }
+}
+
+@* ══════════════════════════════════════════════════════════════════════════
+   MODAL — GESTIONAR PUESTOS DE TRABAJO
+   ══════════════════════════════════════════════════════════════════════════ *@
+@if (_modalPuestos)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.55);">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+            <div class="modal-content shadow-lg border-0">
+
+                @* Cabecera *@
+                <div class="modal-header text-white" style="background:linear-gradient(135deg,#1e3d1a,#2d5a27);">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-briefcase-fill me-2"></i>Gestión de Puestos de Trabajo
+                    </h5>
+                    <button class="btn-close btn-close-white" @onclick="CerrarModalPuestos"></button>
+                </div>
+
+                <div class="modal-body p-4">
+
+                    @* Alerta interna *@
+                    @if (!string.IsNullOrEmpty(_puestoAlerta))
+                    {
+                        <div class="alert alert-@_puestoAlertaTipo alert-dismissible fade show py-2" role="alert">
+                            <i class="bi @(_puestoAlertaTipo == "success" ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") me-2"></i>
+                            @_puestoAlerta
+                            <button type="button" class="btn-close" @onclick="() => _puestoAlerta = null"></button>
+                        </div>
+                    }
+
+                    @* ── Formulario Crear ─────────────────────────────────── *@
+                    <div class="card border-0 shadow-sm mb-4" style="background:#f9fdf9;">
+                        <div class="card-body p-3">
+                            <h6 class="fw-bold text-success mb-3"><i class="bi bi-plus-circle-fill me-1"></i>Nuevo Puesto</h6>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">Nombre <span class="text-danger">*</span></label>
+                                    <input class="form-control form-control-sm" @bind="_puestoNuevo.Nombre" placeholder="Ej: Recepcionista" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Descripción <span class="text-muted">(opcional)</span></label>
+                                    <input class="form-control form-control-sm" @bind="_puestoNuevo.Descripcion" placeholder="Breve descripción del rol" />
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-success btn-sm w-100" @onclick="CrearPuesto" disabled="@_puestoGuardando">
+                                        @if (_puestoGuardando) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                                        <i class="bi bi-save-fill me-1"></i>Guardar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* ── Buscador ─────────────────────────────────────────── *@
+                    <div class="input-group input-group-sm shadow-sm mb-3" style="max-width:380px;">
+                        <input type="text" class="form-control" placeholder="Buscar por ID o nombre…"
+                               @bind="_puestoBusqueda" @onkeyup="@(async (KeyboardEventArgs e) => { if (e.Key=="Enter") await BuscarPuestos(); })" />
+                        <button class="btn btn-outline-success" @onclick="BuscarPuestos">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+
+                    @* ── Tabla ────────────────────────────────────────────── *@
+                    @if (!_puestosPaged.Items.Any())
+                    {
+                        <div class="alert alert-info py-2"><i class="bi bi-info-circle me-1"></i>No se encontraron puestos.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive rounded border shadow-sm">
+                            <table class="table table-hover align-middle mb-0 bg-white">
+                                <thead style="background:#5d4037;color:#fff;">
+                                    <tr>
+                                        <th class="ps-3" style="width:80px;">ID</th>
+                                        <th>Nombre</th>
+                                        <th>Descripción</th>
+                                        <th class="text-center" style="width:200px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var p in _puestosPaged.Items)
+                                    {
+                                        @if (_puestoEditId == p.IdPuestoTrabajo)
+                                        {
+                                            @* Fila en modo edición *@
+                                            <tr style="background:#fffde7;">
+                                                <td class="ps-3 fw-bold">#@p.IdPuestoTrabajo</td>
+                                                <td>
+                                                    <input class="form-control form-control-sm" @bind="_puestoEditNombre" placeholder="Nombre" />
+                                                </td>
+                                                <td>
+                                                    <input class="form-control form-control-sm" @bind="_puestoEditDesc" placeholder="Descripción" />
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="d-flex gap-1 justify-content-center">
+                                                        <button class="btn btn-sm btn-success" @onclick="GuardarEditarPuesto">
+                                                            <i class="bi bi-check-lg"></i> Guardar
+                                                        </button>
+                                                        <button class="btn btn-sm btn-secondary" @onclick="CancelarEditarPuesto">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            @* Fila en modo lectura *@
+                                            <tr>
+                                                <td class="ps-3 fw-bold">#@p.IdPuestoTrabajo</td>
+                                                <td class="fw-semibold">@p.Nombre</td>
+                                                <td class="text-muted small">@(string.IsNullOrEmpty(p.Descripcion) ? "—" : p.Descripcion)</td>
+                                                <td class="text-center">
+                                                    <div class="d-flex gap-1 justify-content-center">
+                                                        <button class="btn btn-sm btn-warning" @onclick="() => IniciarEditarPuesto(p)">
+                                                            <i class="bi bi-pencil-fill"></i> Editar
+                                                        </button>
+                                                        <button class="btn btn-sm btn-danger" @onclick="() => EliminarPuesto(p.IdPuestoTrabajo)">
+                                                            <i class="bi bi-trash-fill"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @* Paginación *@
+                        <nav class="d-flex justify-content-between align-items-center mt-3">
+                            <span class="text-muted small">
+                                Página <strong>@_puestosPaged.CurrentPage</strong> de <strong>@_puestosPaged.TotalPages</strong>
+                                (@_puestosPaged.TotalRecords registros)
+                            </span>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item @(_puestosPaged.CurrentPage == 1 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => PuestoCambiarPagina(_puestosPaged.CurrentPage - 1)">Anterior</button>
+                                </li>
+                                @for (int pg = 1; pg <= _puestosPaged.TotalPages; pg++)
+                                {
+                                    var pgLocal = pg;
+                                    <li class="page-item @(_puestosPaged.CurrentPage == pgLocal ? "active" : "")">
+                                        <button class="page-link" @onclick="() => PuestoCambiarPagina(pgLocal)">@pgLocal</button>
+                                    </li>
+                                }
+                                <li class="page-item @(_puestosPaged.CurrentPage == _puestosPaged.TotalPages ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => PuestoCambiarPagina(_puestosPaged.CurrentPage + 1)">Siguiente</button>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CerrarModalPuestos">
+                        <i class="bi bi-x-circle me-1"></i>Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 }
