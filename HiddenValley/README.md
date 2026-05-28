@@ -209,6 +209,134 @@ Consume el endpoint `GET /api/dashboard` y muestra:
 
 ---
 
+## Pruebas Unitarias — `HiddenValley.Tests`
+
+Proyecto de pruebas unitarias independiente que valida la capa de servicios de la API sin acceso a base de datos real. Utiliza **EF Core InMemory** como mock del contexto de base de datos.
+
+### Tecnologías del proyecto de pruebas
+
+* **Framework:** xUnit
+* **Base de datos simulada:** Microsoft.EntityFrameworkCore.InMemory
+* **Target:** .NET 10
+
+### Cobertura de tests
+
+| Archivo | Servicio probado | Tests |
+|---|---|---|
+| `CabanaServiceTests.cs` | `CabanaService` | 7 |
+| `PersonaServiceTests.cs` | `PersonaService` | 8 |
+| `ClienteServiceTests.cs` | `ClienteService` | 8 |
+| `ReservacionServiceTests.cs` | `ReservacionService` | 10 |
+| `EmpleadoServiceTests.cs` | `EmpleadoService` | 11 |
+| **Total** | | **44** |
+
+### Cómo ejecutar las pruebas
+
+**Todos los tests:**
+```bash
+dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj
+```
+
+**Con detalle de cada test:**
+```bash
+dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --logger "console;verbosity=normal"
+```
+
+**Solo un servicio específico:**
+```bash
+dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --filter "CabanaServiceTests"
+dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --filter "ReservacionServiceTests"
+dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --filter "ClienteServiceTests"
+dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --filter "PersonaServiceTests"
+dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --filter "EmpleadoServiceTests"
+```
+
+**Desde la raíz de la solución:**
+```bash
+dotnet test HiddenValley.sln
+```
+
+### Principios F.I.R.S.T. aplicados
+
+Los tests están diseñados siguiendo los principios F.I.R.S.T. que garantizan pruebas confiables y mantenibles:
+
+**F — Fast (Rápidos)**
+Cada test usa una base de datos en memoria (`UseInMemoryDatabase`). No hay conexiones reales a PostgreSQL, ni operaciones de red ni disco. Toda la suite de 44 tests corre en menos de 5 segundos.
+
+**I — Isolated (Aislados)**
+Cada test crea su propia instancia de `ApplicationDbContext` con un nombre de base de datos único generado con `Guid.NewGuid()`. Esto garantiza que ningún test comparte estado con otro, sin importar el orden de ejecución o si corren en paralelo.
+
+```csharp
+// Helpers/DbContextHelper.cs
+.UseInMemoryDatabase($"{dbName}_{Guid.NewGuid()}")
+```
+
+**R — Repeatable (Repetibles)**
+Los tests no dependen de datos externos, variables de entorno, fecha del sistema ni estado previo. Cada ejecución produce exactamente el mismo resultado.
+
+**S — Self-validating (Auto-validables)**
+Cada test tiene su propio `Assert` que determina si pasa o falla sin intervención manual. No se requiere revisar logs ni salidas externas.
+
+**T — Timely (Oportunos)**
+Los tests fueron escritos junto con el análisis de los servicios, cubriendo tanto los caminos exitosos (`RetornaSuccess`) como los casos de error y validaciones de negocio (`RetornaError`).
+
+### Casos de prueba por servicio
+
+**CabanaService**
+- Registrar cabaña con tipo existente → éxito
+- Registrar cabaña con tipo inexistente → error
+- Eliminar cabaña sin reservaciones → éxito
+- Eliminar cabaña con reservaciones asociadas → error
+- Eliminar cabaña inexistente → error
+- Cambiar estado a uno válido → éxito
+- Cambiar estado a uno inválido → error
+
+**PersonaService**
+- Crear persona con DPI nuevo → éxito
+- Crear persona con DPI duplicado → error
+- Verificar existencia de DPI registrado → `true`
+- Verificar existencia de DPI no registrado → `false`
+- Actualizar persona existente → éxito y verifica el cambio
+- Actualizar persona inexistente → error
+- Eliminar persona sin vínculos → éxito
+- Eliminar persona vinculada a cliente → error
+
+**ClienteService**
+- Crear cliente con persona existente y no registrada → éxito
+- Crear cliente con persona inexistente → error
+- Crear cliente con persona ya registrada como cliente → error
+- Eliminar cliente sin historial de reservas → éxito
+- Eliminar cliente con historial de reservas → error
+- Eliminar cliente inexistente → error
+- Actualizar teléfono de cliente existente → éxito y verifica el cambio
+- Buscar cliente por teléfono → retorna DTO correcto
+- Buscar con filtro inexistente → retorna `null`
+
+**ReservacionService**
+- Crear reservación con datos válidos → éxito, verifica noches y total
+- Crear con fecha de salida menor a entrada → error
+- Crear con cliente inexistente → error
+- Crear con teléfono que no coincide → error
+- Crear excediendo capacidad de la cabaña → error
+- Crear con traslape de fechas en la misma cabaña → error
+- Obtener reservación por ID existente → retorna DTO
+- Obtener reservación por ID inexistente → retorna `null`
+- Actualizar reservación cancelada → error
+- Actualizar con estado inválido → error
+
+**EmpleadoService**
+- Crear empleado con datos válidos → éxito
+- Crear con persona inexistente → error
+- Crear con puesto inexistente → error
+- Crear con persona ya registrada como empleado → error
+- Eliminar empleado existente → éxito
+- Eliminar empleado inexistente → error
+- Actualizar teléfono de empleado existente → éxito y verifica el cambio
+- Actualizar empleado inexistente → error
+- Actualizar con nuevo puesto inexistente → error
+
+---
+
 ## Autores
 - Jorge Danilo Ucelo
 - Christian Eduardo Lopez Lemus
