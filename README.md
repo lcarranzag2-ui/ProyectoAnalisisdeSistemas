@@ -19,6 +19,19 @@ El sistema fue diseñado utilizando una arquitectura moderna basada en microserv
 * Comunicación entre frontend y backend mediante API REST
 * Documentación de endpoints con Swagger
 * Contenerización completa con Docker para facilitar la implementación
+---
+# Características Principales
+
+* API RESTful
+* Frontend interactivo con Blazor
+* Persistencia con PostgreSQL
+* Contenedores Docker
+* Documentación Swagger
+* Entity Framework Core
+* Pruebas unitarias
+* Pruebas de Integracion
+* Pruebas End to End
+---
 
 ## Objetivo del Proyecto
 
@@ -671,20 +684,6 @@ dotnet test --filter "FullyQualifiedName~Create_ConDatosValidos_DeberiaRegistrar
 2. **Uso del Bloque `using(var scope)`:** La resolución de servicios del DbContext se maneja a través de alcances (`IServiceScope`) efímeros independientes para simular el ciclo de vida real de las solicitudes HTTP de ASP.NET Core.
 3. **Verificación en Dos Pasos (Assert):** No solo se valida el código de estado de la respuesta HTTP (`Ok`, `Created`, `NoContent`), sino que se realiza una consulta directa a la base de datos para confirmar que los cambios se hayan persistido físicamente.
 
-```
-
-```
-
-
-# Características Principales
-
-* API RESTful
-* Frontend interactivo con Blazor
-* Persistencia con SQL Server
-* Contenedores Docker
-* Documentación Swagger
-* Entity Framework Core
-* Pruebas unitarias
 
 ---
 
