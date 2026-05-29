@@ -209,131 +209,84 @@ Consume el endpoint `GET /api/dashboard` y muestra:
 
 ---
 
-## Pruebas Unitarias — `HiddenValley.Tests`
+## Pruebas E2E
 
-Proyecto de pruebas unitarias independiente que valida la capa de servicios de la API sin acceso a base de datos real. Utiliza **EF Core InMemory** como mock del contexto de base de datos.
+El proyecto cuenta con pruebas end-to-end reales que verifican el sistema completo: desde el cliente HTTP hasta la API y la base de datos PostgreSQL, sin mockear nada.
 
-### Tecnologías del proyecto de pruebas
+### Herramientas utilizadas
 
-* **Framework:** xUnit
-* **Base de datos simulada:** Microsoft.EntityFrameworkCore.InMemory
-* **Target:** .NET 10
+* **pytest** — framework para correr las pruebas
+* **requests** — para las pruebas de API (llamadas HTTP directas)
+* **playwright** — para las pruebas de frontend (navegador real)
+* **Python 3** — lenguaje base
 
-### Cobertura de tests
+### Instalación de dependencias
 
-| Archivo | Servicio probado | Tests |
+```bash
+python -m pip install pytest requests pytest-playwright
+python -m playwright install chromium
+```
+
+### Archivos de prueba
+
+```
+tests/
+├── conftest.py               # configuración base y fixture de sesión
+├── test_reservaciones.py     # pruebas de API (7 pruebas)
+└── test_frontend.py          # pruebas de UI con Playwright (10 pruebas)
+```
+
+### Cómo correr las pruebas
+
+Con Docker levantado y los datos base insertados, desde la raíz del proyecto:
+
+```bash
+# Solo pruebas de API
+python -m pytest tests/test_reservaciones.py -v
+
+# Solo pruebas de frontend
+python -m pytest tests/test_frontend.py -v
+
+# Pruebas de frontend con navegador visible
+python -m pytest tests/test_frontend.py -v --headed
+
+# Todas las pruebas juntas
+python -m pytest tests/ -v
+
+# Generar reporte HTML
+python -m pytest tests/ -v --html=reporte.html
+```
+
+### Cobertura de las pruebas de API
+
+| Prueba | Endpoint | Descripción |
 |---|---|---|
-| `CabanaServiceTests.cs` | `CabanaService` | 7 |
-| `PersonaServiceTests.cs` | `PersonaService` | 8 |
-| `ClienteServiceTests.cs` | `ClienteService` | 8 |
-| `ReservacionServiceTests.cs` | `ReservacionService` | 10 |
-| `EmpleadoServiceTests.cs` | `EmpleadoService` | 11 |
-| **Total** | | **44** |
+| `test_crear_persona` | `POST /api/personas` | Crea una persona con DPI único |
+| `test_buscar_cliente_existente` | `GET /api/clientes/buscar` | Busca cliente por teléfono |
+| `test_listar_cabanas` | `GET /api/cabanas` | Lista todas las cabañas |
+| `test_crear_reservacion_exitosa` | `POST /api/reservaciones` | Flujo completo de reservación |
+| `test_reservacion_fechas_invalidas` | `POST /api/reservaciones` | Valida que fechas inválidas retornen 400 |
+| `test_listar_reservaciones` | `GET /api/reservaciones` | Lista todas las reservaciones |
+| `test_dashboard` | `GET /api/dashboard` | Verifica métricas del día |
 
-### Cómo ejecutar las pruebas
+### Cobertura de las pruebas de frontend
 
-**Todos los tests:**
-```bash
-dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj
-```
+| Prueba | Página | Descripción |
+|---|---|---|
+| `test_dashboard_carga` | `/dashboard` | El dashboard carga correctamente |
+| `test_dashboard_tiene_tabla` | `/dashboard` | Se muestra el resumen de operaciones |
+| `test_cabanas_carga` | `/cabanas` | La página de cabañas carga con su título |
+| `test_cabanas_boton_registrar_visible` | `/cabanas` | El botón de registro es visible |
+| `test_cabanas_abrir_modal_registro` | `/cabanas` | El modal de nueva cabaña se abre |
+| `test_cabanas_cerrar_modal` | `/cabanas` | El modal se puede cerrar |
+| `test_reservaciones_carga` | `/reservaciones` | La página de reservaciones carga |
+| `test_reservaciones_boton_nueva_visible` | `/reservaciones` | El botón Nueva Reservación es visible |
+| `test_reservaciones_abrir_modal_crear` | `/reservaciones` | El modal de crear reservación se abre |
+| `test_reservaciones_buscador` | `/reservaciones` | El buscador de reservaciones funciona |
 
-**Con detalle de cada test:**
-```bash
-dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --logger "console;verbosity=normal"
-```
+### Bug encontrado durante las pruebas
 
-**Solo un servicio específico:**
-```bash
-dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --filter "CabanaServiceTests"
-dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --filter "ReservacionServiceTests"
-dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --filter "ClienteServiceTests"
-dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --filter "PersonaServiceTests"
-dotnet test HiddenValley.Tests/HiddenValley.Tests.csproj --filter "EmpleadoServiceTests"
-```
-
-**Desde la raíz de la solución:**
-```bash
-dotnet test HiddenValley.sln
-```
-
-### Principios F.I.R.S.T. aplicados
-
-Los tests están diseñados siguiendo los principios F.I.R.S.T. que garantizan pruebas confiables y mantenibles:
-
-**F — Fast (Rápidos)**
-Cada test usa una base de datos en memoria (`UseInMemoryDatabase`). No hay conexiones reales a PostgreSQL, ni operaciones de red ni disco. Toda la suite de 44 tests corre en menos de 5 segundos.
-
-**I — Isolated (Aislados)**
-Cada test crea su propia instancia de `ApplicationDbContext` con un nombre de base de datos único generado con `Guid.NewGuid()`. Esto garantiza que ningún test comparte estado con otro, sin importar el orden de ejecución o si corren en paralelo.
-
-```csharp
-// Helpers/DbContextHelper.cs
-.UseInMemoryDatabase($"{dbName}_{Guid.NewGuid()}")
-```
-
-**R — Repeatable (Repetibles)**
-Los tests no dependen de datos externos, variables de entorno, fecha del sistema ni estado previo. Cada ejecución produce exactamente el mismo resultado.
-
-**S — Self-validating (Auto-validables)**
-Cada test tiene su propio `Assert` que determina si pasa o falla sin intervención manual. No se requiere revisar logs ni salidas externas.
-
-**T — Timely (Oportunos)**
-Los tests fueron escritos junto con el análisis de los servicios, cubriendo tanto los caminos exitosos (`RetornaSuccess`) como los casos de error y validaciones de negocio (`RetornaError`).
-
-### Casos de prueba por servicio
-
-**CabanaService**
-- Registrar cabaña con tipo existente → éxito
-- Registrar cabaña con tipo inexistente → error
-- Eliminar cabaña sin reservaciones → éxito
-- Eliminar cabaña con reservaciones asociadas → error
-- Eliminar cabaña inexistente → error
-- Cambiar estado a uno válido → éxito
-- Cambiar estado a uno inválido → error
-
-**PersonaService**
-- Crear persona con DPI nuevo → éxito
-- Crear persona con DPI duplicado → error
-- Verificar existencia de DPI registrado → `true`
-- Verificar existencia de DPI no registrado → `false`
-- Actualizar persona existente → éxito y verifica el cambio
-- Actualizar persona inexistente → error
-- Eliminar persona sin vínculos → éxito
-- Eliminar persona vinculada a cliente → error
-
-**ClienteService**
-- Crear cliente con persona existente y no registrada → éxito
-- Crear cliente con persona inexistente → error
-- Crear cliente con persona ya registrada como cliente → error
-- Eliminar cliente sin historial de reservas → éxito
-- Eliminar cliente con historial de reservas → error
-- Eliminar cliente inexistente → error
-- Actualizar teléfono de cliente existente → éxito y verifica el cambio
-- Buscar cliente por teléfono → retorna DTO correcto
-- Buscar con filtro inexistente → retorna `null`
-
-**ReservacionService**
-- Crear reservación con datos válidos → éxito, verifica noches y total
-- Crear con fecha de salida menor a entrada → error
-- Crear con cliente inexistente → error
-- Crear con teléfono que no coincide → error
-- Crear excediendo capacidad de la cabaña → error
-- Crear con traslape de fechas en la misma cabaña → error
-- Obtener reservación por ID existente → retorna DTO
-- Obtener reservación por ID inexistente → retorna `null`
-- Actualizar reservación cancelada → error
-- Actualizar con estado inválido → error
-
-**EmpleadoService**
-- Crear empleado con datos válidos → éxito
-- Crear con persona inexistente → error
-- Crear con puesto inexistente → error
-- Crear con persona ya registrada como empleado → error
-- Eliminar empleado existente → éxito
-- Eliminar empleado inexistente → error
-- Actualizar teléfono de empleado existente → éxito y verifica el cambio
-- Actualizar empleado inexistente → error
-- Actualizar con nuevo puesto inexistente → error
+Durante la ejecución de las pruebas E2E se detectó un bug en `ReservacionService.cs` línea 128 donde una línea de prueba (`cabana.IdCabana = 2`) fue dejada accidentalmente en producción, causando un `InvalidOperationException` al intentar modificar la clave primaria de una entidad trackeada por Entity Framework. El bug fue identificado por las pruebas con error 500 y corregido eliminando dicha línea.
 
 ---
 
